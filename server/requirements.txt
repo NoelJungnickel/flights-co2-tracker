@@ -1,0 +1,4 @@
+# For server side api
+fastapi
+uvicorn
+redis
