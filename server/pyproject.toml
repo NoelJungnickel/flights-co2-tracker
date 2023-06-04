@@ -1,0 +1,9 @@
+[tool.black]
+# Set maximum characters per line
+line-length = 90
+
+# Set python version to 3.11
+target-version = ['py311']
+
+# Format python files
+include = '\.py$'
