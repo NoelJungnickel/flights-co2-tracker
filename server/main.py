@@ -2,25 +2,54 @@ from fastapi import FastAPI
 from redis import Redis
 import uvicorn
 
-class FastApiServer:
-    def __init__(self, host: str = "127.0.0.1", port: int = "8000") -> None:
-        self.app = FastAPI()
-        self.host = host
-        self.port = port
-        self.setup_routes()
-        self.start_server()
 
-    def setup_routes(self) -> None:
-        @self.app.get("/api/total/berlin")
-        async def get_total_emmision_berlin() -> int:
-            return 0
-            
-    def start_server(self) -> None:
+class FastAPIWithRedis:
+    """Basic class managing a FastAPI endpoint with a Redis Database.
+
+    Args:
+        api_host (str): Host address for the FastAPI application. Default: "127.0.0.1".
+        api_port (int): Port for the FastAPI application. Default: 8000.
+        redis_host (str): Redis server host address. Default: "127.0.0.1".
+        redis_port (int): Redis server port. Default: 6379.
+    """
+
+    def __init__(
+        self,
+        api_host: str = "127.0.0.1",
+        api_port: int = "8000",
+        redis_host: str = "127.0.0.1",
+        redis_port: int = "6379",
+    ) -> None:
+        self.app = FastAPI()
+        self.host = api_host
+        self.port = api_port
+        self.redis = Redis(host=redis_host, port=redis_port, db=0)
+        self.register_routes()
+
+    def register_routes(self) -> None:
+        """Set specific routes for the FastAPI application."""
+
+        @self.app.get("/api/total/{city}")
+        async def get_total_carbon(city: str) -> None:
+            total_value = self.redis.hget("total", city)
+            return {city: total_value.decode() if total_value else None}
+
+    def run(self) -> None:
+        """Run the FastAPI application with given host and port."""
         uvicorn.run(self.app, host=self.host, port=self.port)
 
 
+API_HOST = "127.0.0.1"
+API_PORT = 8000
+REDIS_HOST = "127.0.0.1"
+REDIS_PORT = 6379
+
+cities = ["berlin"]
+
+
 def main():
-    return False
+    api = FastAPIWithRedis(API_HOST, API_PORT, REDIS_HOST, REDIS_PORT)
+    api.run()
 
 
 if __name__ == "__main__":
