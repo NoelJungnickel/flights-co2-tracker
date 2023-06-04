@@ -16,23 +16,28 @@ class FastAPIWithRedis:
     def __init__(
         self,
         api_host: str = "127.0.0.1",
-        api_port: int = "8000",
+        api_port: int = 8000,
         redis_host: str = "127.0.0.1",
-        redis_port: int = "6379",
+        redis_port: int = 6379,
     ) -> None:
         self.app = FastAPI()
         self.host = api_host
         self.port = api_port
-        self.redis = Redis(host=redis_host, port=redis_port, db=0)
+        # Connecting to Redis Database
+        try:
+            self.redis = Redis(host=redis_host, port=redis_port, db=0)
+            self.redis.info()
+        except Exception:
+            raise RuntimeError("Failed to connect to Redis.")
         self.register_routes()
 
     def register_routes(self) -> None:
         """Set specific routes for the FastAPI application."""
 
         @self.app.get("/api/total/{city}")
-        async def get_total_carbon(city: str) -> None:
+        async def get_total_carbon(city: str) -> float:
             total_value = self.redis.hget("total", city)
-            return {city: total_value.decode() if total_value else None}
+            return total_value.decode() if total_value else 0.0
 
     def run(self) -> None:
         """Run the FastAPI application with given host and port."""
