@@ -1,4 +1,3 @@
-import { json } from "@remix-run/node";
 import {
   isRouteErrorResponse,
   useLoaderData,
@@ -118,9 +117,7 @@ function Card() {
       <div className="border-t border-gray-200 dark:border-gray-600">
         <div
           className="flex flex-col gap-10 rounded-lg bg-white p-4 text-center dark:bg-gray-800 md:p-8"
-          id="stats"
           role="tabpanel"
-          aria-labelledby="stats-tab"
         >
           {currentTab === Tab.berlin ? (
             <Berlin totalCO2BerlinKG={totalCO2BerlinKG} />

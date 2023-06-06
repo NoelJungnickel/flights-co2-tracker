@@ -21,21 +21,19 @@ function Leaderboard({ leaderboardContent }: Props) {
             leaderboardEntry.placing !== 1 ? "text-lg" : "text-3xl";
           return (
             <li key={leaderboardEntry.placing} className="py-3 sm:py-4">
-              <div className="flex items-center space-x-4">
-                <p
-                  className={`${fontSizeClass} truncate font-medium text-gray-900 dark:text-white`}
+              <div className="flex flex-col sm:flex-row">
+                <div
+                  className={`${fontSizeClass} pr-0 font-medium text-gray-900 dark:text-white sm:pr-10`}
                 >
                   {leaderboardEntry.placing}.
-                </p>
-                <div className="min-w-0 flex-1">
-                  <p
-                    className={`${fontSizeClass} truncate font-medium text-gray-900 dark:text-white`}
-                  >
-                    {leaderboardEntry.name}
-                  </p>
                 </div>
                 <div
-                  className={`${fontSizeClass} dark:text-whitez inline-flex items-center text-base font-semibold text-gray-900 dark:text-white`}
+                  className={`${fontSizeClass} flex-1 text-center font-medium text-gray-900 dark:text-white sm:text-left`}
+                >
+                  {leaderboardEntry.name}
+                </div>
+                <div
+                  className={`${fontSizeClass} font-semibold text-gray-900 dark:text-white `}
                 >
                   {leaderboardEntry.kgCO2} kg CO2
                 </div>

@@ -1,4 +1,4 @@
-import { Outlet, isRouteErrorResponse, useRouteError } from "@remix-run/react";
+import { Outlet } from "@remix-run/react";
 
 function Stats() {
   return (
