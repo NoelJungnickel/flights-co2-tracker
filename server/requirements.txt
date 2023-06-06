@@ -2,3 +2,7 @@
 fastapi
 uvicorn
 redis
+
+# for calculate_co2 module
+requests
+geopy
