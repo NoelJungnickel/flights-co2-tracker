@@ -1,4 +1,14 @@
-import { Outlet } from "@remix-run/react";
+import { Outlet, type V2_MetaFunction } from "@remix-run/react";
+
+export const meta: V2_MetaFunction = () => {
+  return [
+    { title: "Flight CO2 Tracker" },
+    {
+      name: "description",
+      content: "Interesting data about CO2 emissions caused by flights!",
+    },
+  ];
+};
 
 function Stats() {
   return (
