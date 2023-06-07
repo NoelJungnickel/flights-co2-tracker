@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 from fastapi import FastAPI
 from redis import Redis
 import uvicorn
@@ -23,6 +24,7 @@ class FastAPIWithRedis:
         self.app = FastAPI()
         self.host = api_host
         self.port = api_port
+
         # Connecting to Redis Database
         try:
             self.redis = Redis(host=redis_host, port=redis_port, db=0)
@@ -52,7 +54,18 @@ REDIS_PORT = 6379
 cities = ["berlin"]
 
 
-def main():
+def main() -> None:
+    """Entry point of the application."""
+    parser = ArgumentParser()
+    parser.add_argument("--username", type=str, help="Username for OpenSky")
+    parser.add_argument("--password", type=str, help="Password for OpenSky")
+    args = parser.parse_args()
+
+    # Access username and password from console
+    username = args.username
+    password = args.password
+    print(username, password)
+
     api = FastAPIWithRedis(API_HOST, API_PORT, REDIS_HOST, REDIS_PORT)
     api.run()
 
