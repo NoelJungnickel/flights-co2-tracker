@@ -1,0 +1,4 @@
+# For server side api
+fastapi==0.95.2
+uvicorn==0.22.0
+redis==4.5.5
