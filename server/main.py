@@ -1,4 +1,3 @@
-from argparse import ArgumentParser
 from fastapi import FastAPI
 from redis import Redis
 import uvicorn
@@ -56,16 +55,6 @@ cities = ["berlin"]
 
 def main() -> None:
     """Entry point of the application."""
-    parser = ArgumentParser()
-    parser.add_argument("--username", type=str, help="Username for OpenSky")
-    parser.add_argument("--password", type=str, help="Password for OpenSky")
-    args = parser.parse_args()
-
-    # Access username and password from console
-    username = args.username
-    password = args.password
-    print(username, password)
-
     api = FastAPIWithRedis(API_HOST, API_PORT, REDIS_HOST, REDIS_PORT)
     api.run()
 
