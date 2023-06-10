@@ -36,6 +36,6 @@ jobs:
           VALIDATE_TYPESCRIPT_ES: true
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # LINTER_RULES_PATH: client
+          LINTER_RULES_PATH: client
           TYPESCRIPT_STANDARD_TSCONFIG_FILE: tsconfig.json
           TYPESCRIPT_ES_CONFIG_FILE: .eslintrc.js
