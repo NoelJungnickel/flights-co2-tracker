@@ -1,8 +1,6 @@
 name: Lint and Format Typescript Code
 
 on:
-  push:
-    branches-ignore: [main]
   pull_request:
     branches: [main]
 
