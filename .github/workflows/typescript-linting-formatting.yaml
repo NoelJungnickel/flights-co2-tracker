@@ -8,6 +8,9 @@ jobs:
   build:
     name: Lint and Format
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./client
 
     steps:
       - name: Checkout Code
@@ -21,9 +24,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-
-      - name: Navigate to client directory
-        run: cd client
 
       - name: Install dependencies
         run: npm ci
