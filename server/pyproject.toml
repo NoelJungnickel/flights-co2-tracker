@@ -30,3 +30,17 @@ include = ["*.py"]
 # Configure Ruff to enforce Google-style docstrings when checking documentation
 [tool.ruff.pydocstyle]
 convention = "google"
+
+[build-system]
+requires = ["mypy"]
+build-backend = "mypy"
+
+[tool.mypy]
+# Specify python version
+python_version = "3.11"
+
+# Enable stricter optional type checking
+strict_optional = true
+
+# Disallow untyped definitions
+disallow_untyped_defs = true

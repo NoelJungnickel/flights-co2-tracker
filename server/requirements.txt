@@ -10,3 +10,4 @@ geopy
 # For linting
 black
 ruff
+mypy
