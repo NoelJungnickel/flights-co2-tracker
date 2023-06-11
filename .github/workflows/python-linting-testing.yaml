@@ -8,6 +8,11 @@ jobs:
     # specifies the os that the job will run on 
     runs-on: ubuntu-latest
 
+    # set default working directory
+    defaults:
+        run:
+          working-directory: ./server
+
     steps:
     # downloads the repository code to the runner's file system for workflow access
     - uses: actions/checkout@v2
