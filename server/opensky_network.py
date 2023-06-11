@@ -3,14 +3,18 @@ from requests.auth import HTTPBasicAuth
 from typing import Optional
 
 
-def get_states(username: str, password: str, bounding_box: list) -> Optional[dict]:
+def get_states(
+        username: str, 
+        password: str, 
+        bounding_box: tuple[float, float, float, float]
+) -> Optional[dict]:
     """Retrieves the states of aircraft within a specified bounding box.
 
     Args:
         username (str): The username for authentication.
         password (str): The password for authentication.
-        bounding_box (list): A list containing the coordinates of the bounding
-            box in the format [lamin, lomin, lamax, lomax].
+        bounding_box (tuple[float, float, float, float]): A tuple containing the coordinates of the bounding
+            box in the format (lamin, lomin, lamax, lomax).
 
     Returns:
         dict: A dictionary containing the response JSON if successful, None
