@@ -3,8 +3,7 @@ from requests.auth import HTTPBasicAuth
 
 
 def get_states(username: str, password: str, bounding_box: list) -> dict:
-    """
-    Retrieves the states of aircraft within a specified bounding box.
+    """Retrieves the states of aircraft within a specified bounding box.
 
     Args:
         username (str): The username for authentication.
