@@ -20,9 +20,20 @@ def get_states(username: str, password: str, bounding_box: list) -> Optional[dic
         f"https://opensky-network.org/api/states/all?lamin={bounding_box[0]}"
         f"&lomin={bounding_box[1]}&lamax={bounding_box[2]}&lomax={bounding_box[3]}"
     )
-    response = requests.get(url, auth=HTTPBasicAuth(username, password))
 
-    if response.ok:
-        return response.json()
-    else:
+    try:
+        response = requests.get(
+            url, 
+            auth=HTTPBasicAuth(username, password),
+            timeout=(10)
+        )
+
+        if response.ok:
+            return response.json()
+        else:
+            return None
+    except requests.exceptions.Timeout:
+        print('The request timed out')
         return None
+    
+    
