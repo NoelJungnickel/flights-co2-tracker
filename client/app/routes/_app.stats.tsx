@@ -6,7 +6,8 @@ import {
 import { useState } from "react";
 import Berlin from "~/components/Berlin";
 import FAQ from "~/components/FAQ";
-import Leaderboard, { LeaderboardEntry } from "~/components/Leaderboard";
+import type { LeaderboardEntry } from "~/components/Leaderboard";
+import Leaderboard from "~/components/Leaderboard";
 
 type Stats = {
   totalCO2BerlinKG: number;

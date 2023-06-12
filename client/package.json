@@ -4,7 +4,9 @@
   "scripts": {
     "build": "remix build",
     "dev": "remix dev",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "format": "prettier --write .",
+    "lint": "eslint --fix ./app"
   },
   "dependencies": {
     "@remix-run/css-bundle": "^1.16.1",
