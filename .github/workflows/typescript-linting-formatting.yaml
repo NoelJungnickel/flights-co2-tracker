@@ -3,6 +3,7 @@ name: Lint and Format Typescript Code
 on:
   pull_request:
     branches: [main]
+    paths: ["client/**"]
 
 jobs:
   lint_format:
