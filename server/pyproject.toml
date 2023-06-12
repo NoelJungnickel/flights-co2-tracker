@@ -7,3 +7,40 @@ target-version = ['py311']
 
 # Format python files
 include = '\.py$'
+
+[tool.ruff]
+# Enable Ruff to check for docstring-related (D), pycodestyle-related (E, W), and Pyflakes-related (F) issues
+select = ["D", "E", "F", "W"]
+
+# Disable some rules:
+#   D100: Missing docstring in public module
+#   D107: Missing docstring in __init__
+
+ignore = ["D100", "D107"]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["D", "E", "W"]
+unfixable = ["F"]
+
+# Set basic variables (similar to black)
+line-length = 90
+target-version = "py311"
+include = ["*.py"]
+
+# Configure Ruff to enforce Google-style docstrings when checking documentation
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[build-system]
+requires = ["mypy"]
+build-backend = "mypy"
+
+[tool.mypy]
+# Specify python version
+python_version = "3.11"
+
+# Enable stricter optional type checking
+strict_optional = true
+
+# Disallow untyped definitions
+disallow_untyped_defs = true

@@ -3,6 +3,18 @@ fastapi==0.95.2
 uvicorn==0.22.0
 redis==4.5.5
 
-# for calculate_co2 module
+# For calculate_co2 module
 requests
 geopy
+
+# For linting
+black
+ruff
+
+# For type checking
+mypy
+types-PyYAML
+types-colorama
+types-redis
+types-requests
+types-ujson

@@ -38,7 +38,7 @@ class FastAPIWithRedis:
         @self.app.get("/api/total/{city}")
         async def get_total_carbon(city: str) -> float:
             total_value = self.redis.hget("total", city)
-            return total_value.decode() if total_value else 0.0
+            return float(total_value.decode()) if total_value else 0.0
 
     def run(self) -> None:
         """Run the FastAPI application with given host and port."""
