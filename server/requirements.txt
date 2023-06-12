@@ -10,4 +10,11 @@ geopy
 # For linting
 black
 ruff
+
+# For type checking
 mypy
+types-PyYAML
+types-colorama
+types-redis
+types-requests
+types-ujson
