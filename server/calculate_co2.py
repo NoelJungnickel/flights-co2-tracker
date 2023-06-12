@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = 6379
 aircrafts_in_airspace: dict[str, dict] = {}
-total_co2_emission = 0.0
+total_co2_emission = {"value": 0.0}
 redis = Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
 
@@ -40,8 +40,7 @@ def main() -> None:
 
     byte_total_co2_emission = redis.hget("total", "berlin")
     if byte_total_co2_emission is not None:
-        global total_co2_emission
-        total_co2_emission = float(byte_total_co2_emission.decode())
+        total_co2_emission["value"] = float(byte_total_co2_emission.decode())
 
     # call opensky api every (1 + calculation time) minute(s)
     while True:
@@ -78,8 +77,6 @@ def update_total_co2_emission(
         exit_time_threshold (int): The amount of time needed to determine that
             the  aircraft is no longer in the airspace. Defaults to 60 seconds.
     """
-    global total_co2_emission
-    print(total_co2_emission)
     update_aircrafts_in_airspace(states, request_time)
 
     # find out which aircrafts are no longer in the airspace
@@ -92,6 +89,7 @@ def update_total_co2_emission(
         if request_time - aircraft["last_update"] >= exit_time_threshold:
             aircraft_id_not_in_airspace.append(aircraft_id)
 
+    print(f'aircrafts in airspace: {aircrafts_in_airspace}')
     # calculate the CO2 emission of aircrafts that are no longer in the airspace
     # as the state object of an aircraft may still appear in the next request cycle.
     co2_emission_per_aircraft = []
@@ -134,18 +132,21 @@ def update_total_co2_emission(
                 position["velocity"],
             )
             durations.append(duration)
+        print(f'aircraft_id: {aircraft_id}, durations: {durations}')
         total_duration = sum(durations)
 
         # calculate the CO2 emission
         co2_emission = calculate_co2_emission(total_duration)
         co2_emission_per_aircraft.append(co2_emission)
 
-    total_co2_emission += sum(co2_emission_per_aircraft)
-    redis.hset("total", "berlin", total_co2_emission)
+    total_co2_emission["value"] += sum(co2_emission_per_aircraft)
+    redis.hset("total", "berlin", total_co2_emission["value"])
+    print(f'total CO2: {total_co2_emission["value"]}')
 
     # remove aircrafts no longer in airspace
     for aircraft_id in aircraft_id_not_in_airspace:
         del aircrafts_in_airspace[aircraft_id]
+    print("------------------------------")
 
 
 def update_aircrafts_in_airspace(states: list, request_time: int) -> None:
