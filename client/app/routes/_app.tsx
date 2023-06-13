@@ -12,8 +12,8 @@ export const meta: V2_MetaFunction = () => {
 
 function Stats() {
   return (
-    <div className="flex max-h-fit min-h-screen justify-center bg-blue-200 font-poppins">
-      <div className="flex w-3/4 py-4">
+    <div className="flex max-h-fit min-h-screen justify-center bg-zinc-800 font-poppins">
+      <div className="flex w-full justify-center py-4">
         <Outlet />
       </div>
     </div>
