@@ -23,8 +23,8 @@ export async function loader(): Promise<TypedResponse<Stats>> {
   return json({
     totalLocationCO2KG: totalBerlinCO2Kg,
     leaderboardContent: [
-      { placing: 1, name: "Taylor Swift", kgCO2: 200 },
-      { placing: 2, name: "Elon Musk", kgCO2: 190 },
+      { placing: 1, name: "Elon Musk", kgCO2: 200 },
+      { placing: 2, name: "Taylor Swift", kgCO2: 190 },
       { placing: 3, name: "Alan Sugar", kgCO2: 100 },
       { placing: 4, name: "kenn ich nicht", kgCO2: 80 },
       { placing: 5, name: "nicht echt", kgCO2: 1 },
