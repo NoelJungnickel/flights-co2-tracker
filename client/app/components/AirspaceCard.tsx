@@ -56,7 +56,7 @@ function AirspaceCard({ totalCO2LocationKG }: Props) {
           {Math.floor(totalCO2LocationKG / 1000)}
           <span className="text-xl md:text-5xl">t</span>
           <p className="block w-full pt-2 text-base font-normal text-sky-50 sm:hidden">
-            since 10 June 2023
+            since 13 June 2023
           </p>
         </div>
         <div className="w-1/2 py-5 text-center">
@@ -64,7 +64,12 @@ function AirspaceCard({ totalCO2LocationKG }: Props) {
             const now = Math.floor(totalCO2LocationKG / 1000);
             const lastTime = Math.floor(lastVisitLocationCO2KG / 1000);
             const difference = now - lastTime;
-            return difference <= now ? 0 : difference;
+
+            if (difference < 0) {
+              return 0;
+            }
+
+            return difference === now ? 0 : difference;
           })()}
           <span className="text-xl md:text-5xl">t</span>
           <p className="block w-full pt-2 text-base font-normal text-sky-50 sm:hidden">
@@ -74,7 +79,7 @@ function AirspaceCard({ totalCO2LocationKG }: Props) {
       </div>
       <div className="hidden w-full pt-4 text-center sm:flex">
         <p className="w-1/2 text-lg text-sky-50 md:text-xl">
-          since 10 June 2023
+          since 13 June 2023
         </p>
         <p className="w-1/2 text-lg text-sky-50 md:text-xl">
           more since your last visit
