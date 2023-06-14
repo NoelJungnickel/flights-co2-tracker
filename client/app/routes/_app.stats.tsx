@@ -6,6 +6,7 @@ import {
 import AirspaceCard from "~/components/AirspaceCard";
 import type { LeaderboardEntry } from "~/components/LeaderboardCard";
 import LeaderboardCard from "~/components/LeaderboardCard";
+import LeaderboardRow from "~/components/LeaderboardRow";
 
 type Stats = {
   totalCO2LocationKG: number;
@@ -30,7 +31,7 @@ function Card() {
     useLoaderData<typeof loader>();
 
   return (
-    <div className="flex w-2/3 flex-col gap-3">
+    <div className="flex w-full flex-col gap-3 lg:w-3/4 xl:w-2/3">
       <AirspaceCard totalCO2LocationKG={totalCO2LocationKG} />
       <div className="h-px w-11/12 self-center bg-zinc-700/20"></div>
       <LeaderboardCard leaderboardContent={leaderboardContent} />

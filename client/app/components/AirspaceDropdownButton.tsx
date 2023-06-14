@@ -61,7 +61,7 @@ function AirspaceDropdownButton({ options, defaultOption, onSelect }: Props) {
         </button>
       </div>
       {isOpen && (
-        <div className="absolute left-0 mt-2 w-56 origin-top-right rounded-md bg-sky-500 shadow-lg ring-1 ring-black ring-opacity-5">
+        <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-sky-500 shadow-lg ring-1 ring-black ring-opacity-5 md:left-0">
           <div
             role="menu"
             aria-orientation="vertical"
