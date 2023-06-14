@@ -1,4 +1,5 @@
-import { TypedResponse, json } from "@remix-run/node";
+import type { TypedResponse } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import {
   isRouteErrorResponse,
   useLoaderData,
