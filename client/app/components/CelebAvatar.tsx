@@ -3,28 +3,19 @@ type Props = {
   name: string;
   border?: boolean;
   placing?: number;
-  width?: number;
-  height?: number;
 };
 
-function CelebAvatar({
-  imgUrl,
-  name,
-  border = true,
-  placing,
-  height,
-  width,
-}: Props) {
+function CelebAvatar({ imgUrl, name, border = true, placing }: Props) {
+  const dimensionUtilityClasses = `relative self-center ${
+    placing !== 1 ? "h-44 w-44" : "h-52 w-52"
+  }`;
+
   return (
-    <div
-      className={`relative ${height ? `h-${height}` : "h-52"} ${
-        width ? `w-${width}` : "w-52"
-      }`}
-    >
+    <div className={dimensionUtilityClasses}>
       {imgUrl ? (
         <img
-          className={`rounded-full ${border ? "border-2 border-white" : ""} ${
-            width ? `w-${width}` : ""
+          className={`rounded-full ${
+            border ? "border-2 border-white" : ""
           } text-sky-50 shadow-sm`}
           src={imgUrl}
           alt={name}

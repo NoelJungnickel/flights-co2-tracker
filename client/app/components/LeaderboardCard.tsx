@@ -22,7 +22,7 @@ function LeaderboardCard({ leaderboardContent }: Props) {
         <h1 className="pb-6 text-center text-4xl font-bold text-sky-50">
           Top 3 Emitters
         </h1>
-        <div className="flex w-full justify-center gap-20">
+        <div className="flex w-full flex-col justify-center gap-10 sm:flex-row sm:gap-6 md:gap-20">
           {[
             ascendingSortedLeaderboard[1],
             ascendingSortedLeaderboard[0],
@@ -33,13 +33,16 @@ function LeaderboardCard({ leaderboardContent }: Props) {
             );
 
             return (
-              <div key={celeb.name} className="flex flex-col justify-end">
+              <div
+                key={celeb.name}
+                className={`${
+                  celeb.placing === 1 ? "order-overwrite-first" : ""
+                } flex flex-col justify-end sm:order-none`}
+              >
                 <CelebAvatar
                   name={celeb.name}
                   imgUrl={celebPicture?.url}
                   placing={celeb.placing}
-                  height={index !== 1 ? 44 : 52}
-                  width={index !== 1 ? 44 : 52}
                 />
                 <div className="flex flex-col gap-2 pt-8">
                   <h1 className="text-center text-xl font-bold text-blue-50">
