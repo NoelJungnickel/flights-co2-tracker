@@ -1,3 +1,4 @@
+import { TypedResponse, json } from "@remix-run/node";
 import {
   isRouteErrorResponse,
   useLoaderData,
@@ -6,16 +7,20 @@ import {
 import AirspaceCard from "~/components/AirspaceCard";
 import type { LeaderboardEntry } from "~/components/LeaderboardCard";
 import LeaderboardCard from "~/components/LeaderboardCard";
-import LeaderboardRow from "~/components/LeaderboardRow";
 
 type Stats = {
-  totalCO2LocationKG: number;
+  totalLocationCO2KG: number;
   leaderboardContent: LeaderboardEntry[];
 };
 
-export async function loader(): Promise<Stats> {
-  return {
-    totalCO2LocationKG: 2000,
+export async function loader(): Promise<TypedResponse<Stats>> {
+  const totalBerlinCO2KgReponse = await fetch(
+    "http://35.210.64.77:8000/api/total/berlin"
+  );
+  const totalBerlinCO2Kg = await totalBerlinCO2KgReponse.json();
+
+  return json({
+    totalLocationCO2KG: totalBerlinCO2Kg,
     leaderboardContent: [
       { placing: 1, name: "Taylor Swift", kgCO2: 200 },
       { placing: 2, name: "Elon Musk", kgCO2: 190 },
@@ -23,16 +28,16 @@ export async function loader(): Promise<Stats> {
       { placing: 4, name: "kenn ich nicht", kgCO2: 80 },
       { placing: 5, name: "nicht echt", kgCO2: 1 },
     ],
-  };
+  });
 }
 
 function Card() {
-  const { totalCO2LocationKG, leaderboardContent } =
+  const { totalLocationCO2KG, leaderboardContent } =
     useLoaderData<typeof loader>();
 
   return (
     <div className="flex w-full flex-col gap-3 lg:w-3/4 xl:w-2/3">
-      <AirspaceCard totalCO2LocationKG={totalCO2LocationKG} />
+      <AirspaceCard totalCO2LocationKG={totalLocationCO2KG} />
       <div className="h-px w-11/12 self-center bg-zinc-700/20"></div>
       <LeaderboardCard leaderboardContent={leaderboardContent} />
     </div>
