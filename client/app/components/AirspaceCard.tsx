@@ -14,14 +14,14 @@ export const CO2_KG_LAST_VISIT_STORAGE_KEY = "co2_last_visit";
 function AirspaceCard({ totalCO2LocationKG }: Props) {
   const [lastVisitLocationCO2KG, setLastVisitLocationCO2KG] = useState(0);
 
-  const handleTabClosing = () => {
-    window.localStorage.setItem(
-      CO2_KG_LAST_VISIT_STORAGE_KEY,
-      totalCO2LocationKG.toString()
-    );
-  };
-
   useEffect(() => {
+    const handleTabClosing = () => {
+      window.localStorage.setItem(
+        CO2_KG_LAST_VISIT_STORAGE_KEY,
+        totalCO2LocationKG.toString()
+      );
+    };
+
     let localCo2LastVisitKG = 0;
     const maybeCO2lastVisitKgString = window.localStorage.getItem(
       CO2_KG_LAST_VISIT_STORAGE_KEY
@@ -37,7 +37,7 @@ function AirspaceCard({ totalCO2LocationKG }: Props) {
     return () => {
       window.removeEventListener("unload", handleTabClosing);
     };
-  }, []);
+  }, [totalCO2LocationKG]);
 
   return (
     <div className="h-fit w-full rounded-lg bg-zinc-700 py-5">
