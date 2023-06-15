@@ -90,7 +90,6 @@ def update_total_co2_emission_job(
     # response["states"] can be null
     if response is not None and response["states"] is not None:
         update_total_co2_emission(response["states"], response["time"])
-    
 
 
 def update_total_co2_emission(
@@ -129,7 +128,7 @@ def update_total_co2_emission(
         if request_time - aircraft["last_update"] >= exit_time_threshold:
             aircraft_id_not_in_airspace.append(aircraft_id)
 
-    print(f'aircrafts in airspace: {aircrafts_in_airspace}')
+    print(f"aircrafts in airspace: {aircrafts_in_airspace}")
     # calculate the CO2 emission of aircrafts that are no longer in the airspace
     # as the state object of an aircraft may still appear in the next request cycle.
     co2_emission_per_aircraft = []
@@ -172,7 +171,7 @@ def update_total_co2_emission(
                 position["velocity"],
             )
             durations.append(duration)
-        print(f'aircraft_id: {aircraft_id}, durations: {durations}')
+        print(f"aircraft_id: {aircraft_id}, durations: {durations}")
         total_duration = sum(durations)
 
         # calculate the CO2 emission
