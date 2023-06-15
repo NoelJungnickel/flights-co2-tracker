@@ -2,6 +2,9 @@ from opensky_network import get_states
 from geopy import distance as geopy_distance  # type: ignore
 import time
 import math
+import schedule
+import threading
+from typing import Callable
 from redis import Redis
 from argparse import ArgumentParser
 
@@ -42,21 +45,58 @@ def main() -> None:
     if byte_total_co2_emission is not None:
         total_co2_emission["value"] = float(byte_total_co2_emission.decode())
 
+    schedule.every(1).minutes.do(
+        run_threaded,
+        update_total_co2_emission_job,
+        args=(username, password, berlin_bounding_box),
+    )
+    # start the first job now instead of waiting 1 minute
+    schedule.run_all()
+
     # call opensky api every (1 + calculation time) minute(s)
     while True:
-        response = get_states(username, password, berlin_bounding_box)
+        schedule.run_pending()
+        time.sleep(1)
 
-        # response["states"] can be null
-        if response is not None and response["states"] is not None:
-            update_total_co2_emission(response["states"], response["time"])
 
-        time.sleep(60)
+def run_threaded(job_func: Callable, args: tuple) -> None:
+    """Runs a function in a separate thread.
+
+    Args:
+        job_func (Callable): The function to be executed in a separate thread
+        args (tuple): The arguments to be passed to the function when it is called.
+
+    """
+    job_thread = threading.Thread(target=job_func, args=args)
+    job_thread.start()
+
+
+def update_total_co2_emission_job(
+    username: str, password: str, bounding_box: tuple[float, float, float, float]
+) -> None:
+    """Wrapper function for updating the total co2 emission.
+
+    Should be executed as a job by the schedule library
+
+    Args:
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+        bounding_box (tuple[float, float, float, float]): A tuple containing the
+            coordinates of the bounding box in the format (lamin, lomin, lamax, lomax).
+
+    """
+    response = get_states(username, password, bounding_box)
+
+    # response["states"] can be null
+    if response is not None and response["states"] is not None:
+        update_total_co2_emission(response["states"], response["time"])
+    
 
 
 def update_total_co2_emission(
     states: list, request_time: int, exit_time_threshold: int = 60
 ) -> None:
-    """Updates the global variable total_co2_emission and store it in Redis.
+    """Updates the global variable total_co2_emission and stores it in Redis.
 
         1. Keeps track of the aircraft state from current and previous requests
             and store it in the aircrafts_in_airspace global variable.
