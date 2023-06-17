@@ -4,7 +4,7 @@ from typing import Tuple
 
 
 class CarbonComputation:
-    """Class to compute total carbon emmision in given airspace.
+    """Class to compute total carbon emission in given airspace.
 
     Args:
         airspace_name (str): Name of watched airspace (e.g Berlin).

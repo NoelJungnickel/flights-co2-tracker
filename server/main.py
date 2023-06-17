@@ -73,19 +73,25 @@ def update_total_co2_emission_job(
         username (str): The username for authentication.
         password (str): The password for authentication.
         carbon_computer (CarbonComputation): Class instance to handle the computation
-            of carbon emmision in specific airspace.
+            of carbon emission in specific airspace.
     """
     response = get_states(username, password, carbon_computer.bounding_box)
 
-    # Compute new emmision (response["states"] can be null)
+    # Compute new emission (response["states"] can be null)
     if response is not None and response["states"] is not None:
-        new_emmision = carbon_computer.get_co2_emission(
+        new_emission = carbon_computer.get_co2_emission(
             response["states"], response["time"]
         )
-    print(f"New Emmision in {carbon_computer.airspace_name}: {new_emmision}")
+        print(f"New emission in {carbon_computer.airspace_name}: {new_emission}")
 
-    # Update total emmision
-    total_value = redis.hget("total", carbon_computer.airspace_name)
-    total_emmision = (float(total_value.decode()) if total_value else 0.0) + new_emmision
-    print(f"Total Emmision in {carbon_computer.airspace_name}: {total_emmision}")
-    redis.hset("total", carbon_computer.airspace_name, total_emmision)
+        # Update total emission
+        total_value = redis.hget("total", carbon_computer.airspace_name)
+        total_emission = (
+            float(total_value.decode()) if total_value else 0.0
+        ) + new_emission
+        print(f"Total emission in {carbon_computer.airspace_name}: {total_emission}")
+        redis.hset("total", carbon_computer.airspace_name, total_emission)
+
+
+if __name__ == "__main__":
+    main()
