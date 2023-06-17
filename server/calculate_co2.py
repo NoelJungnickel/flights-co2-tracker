@@ -4,7 +4,7 @@ import time
 import math
 import schedule
 import threading
-from typing import Callable
+from typing import Callable, Tuple
 from redis import Redis
 from argparse import ArgumentParser
 
@@ -59,7 +59,7 @@ def main() -> None:
         time.sleep(1)
 
 
-def run_threaded(job_func: Callable, args: tuple) -> None:
+def run_threaded(job_func: Callable, args: Tuple) -> None:
     """Runs a function in a separate thread.
 
     Args:
@@ -72,7 +72,7 @@ def run_threaded(job_func: Callable, args: tuple) -> None:
 
 
 def update_total_co2_emission_job(
-    username: str, password: str, bounding_box: tuple[float, float, float, float]
+    username: str, password: str, bounding_box: Tuple[float, float, float, float]
 ) -> None:
     """Wrapper function for updating the total co2 emission.
 
@@ -232,7 +232,7 @@ def update_aircrafts_in_airspace(states: list, request_time: int) -> None:
 
 
 def calculate_duration(
-    point1: tuple[float, float], point2: tuple[float, float], velocity: float
+    point1: Tuple[float, float], point2: Tuple[float, float], velocity: float
 ) -> float:
     """Calculates the duration of travel from one point to another with constant velocity.
 
@@ -259,9 +259,9 @@ def calculate_duration(
 
 def get_edge_position(
     true_track: float,
-    bounding_box: tuple[float, float, float, float],
-    position: tuple[float, float],
-) -> tuple[float, float]:
+    bounding_box: Tuple[float, float, float, float],
+    position: Tuple[float, float],
+) -> Tuple[float, float]:
     """Calculates the distance to the bounding box edge.
 
     Args:

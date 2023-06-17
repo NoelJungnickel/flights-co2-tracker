@@ -37,6 +37,7 @@ class FastAPIWithRedis:
 
         @self.app.get("/api/total/{city}")
         async def get_total_carbon(city: str) -> float:
+            """Return total carbon emmision of given city from database."""
             total_value = self.redis.hget("total", city)
             return float(total_value.decode()) if total_value else 0.0
 
