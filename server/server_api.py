@@ -35,10 +35,10 @@ class FastAPIWithRedis:
     def register_routes(self) -> None:
         """Set specific routes for the FastAPI application."""
 
-        @self.app.get("/api/total/{city}")
-        async def get_total_carbon(city: str) -> float:
+        @self.app.get("/api/total/{airspace}")
+        async def get_total_carbon(airspace: str) -> float:
             """Return total carbon emmision of given city from database."""
-            total_value = self.redis.hget("total", city)
+            total_value = self.redis.hget("total", airspace)
             return float(total_value.decode()) if total_value else 0.0
 
     def run(self) -> None:
