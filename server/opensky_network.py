@@ -1,11 +1,11 @@
 import requests
 from requests.auth import HTTPBasicAuth
-from typing import Optional
+from typing import Optional, Tuple, Dict
 
 
 def get_states(
-    username: str, password: str, bounding_box: tuple[float, float, float, float]
-) -> Optional[dict]:
+    username: str, password: str, bounding_box: Tuple[float, float, float, float]
+) -> Optional[Dict]:
     """Retrieves the states of aircraft within a specified bounding box.
 
     Args:
