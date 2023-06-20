@@ -1,8 +1,8 @@
 import schedule
 import threading
 import time
-from redis import Redis
 from typing import Callable, Tuple
+from redis import Redis
 from argparse import ArgumentParser
 
 from opensky_network import get_states
@@ -31,16 +31,16 @@ def main() -> None:
         raise RuntimeError("Failed to connect to Redis.")
 
     bounding_boxes = {
-        "berlin": (52.3418234221, 13.0882097323, 52.6697240587, 13.7606105539)
+        "berlin": (52.3418234221, 13.0882097323, 52.6697240587, 13.7606105539),
     }
 
-    carbon_berlin = CarbonComputation("berlin", bounding_boxes["berlin"])
-
-    schedule.every(1).minutes.do(
-        run_threaded,
-        update_total_co2_emission_job,
-        args=(username, password, carbon_berlin),
+    worker_threads = create_carbon_computer_workers(
+        bounding_boxes, username, password, "minutes", 1
     )
+
+    for worker_thread in worker_threads:
+        worker_thread.start()
+
     # start the first job now instead of waiting 1 minute
     schedule.run_all()
 
@@ -50,16 +50,61 @@ def main() -> None:
         time.sleep(1)
 
 
-def run_threaded(job_func: Callable, args: Tuple) -> None:
-    """Runs a function in a separate thread.
+def create_carbon_computer_workers(
+    bounding_boxes: dict[str, Tuple[float, float, float, float]],
+    username: str,
+    password: str,
+    metric_time: str,
+    interval: int,
+) -> list[threading.Thread]:
+    """Creates worker threads for each city.
 
     Args:
-        job_func (Callable): The function to be executed in a separate thread
-        args (tuple): The arguments to be passed to the function when it is called.
+        bounding_boxes (dict[str, Tuple]): A list of bounding boxes of the
+            watched airspace.
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+        carbon_computer (CarbonComputation): Class instance to handle the computation
+            of carbon emission in specific airspace.
+        metric_time (str): The measure of time intervals. Can be seconds,
+            minutes, hours, days or weeks.
+        interval (int): The interval at which the scheduled job should be executed
 
     """
-    job_thread = threading.Thread(target=job_func, args=args)
-    job_thread.start()
+
+    def schedule_co2_tracking(
+        carbon_computer: CarbonComputation, job: Callable, metric_time: str, interval: int
+    ) -> None:
+        time_mapping = {
+            "seconds": schedule.every(interval).seconds,
+            "minutes": schedule.every(interval).minutes,
+            "hours": schedule.every(interval).hours,
+            "days": schedule.every(interval).days,
+            "weeks": schedule.every(interval).weeks,
+        }
+
+        schedule_func = time_mapping.get(metric_time)
+        if schedule_func:
+            schedule_func.do(carbon_computer.jobqueue.put, job)
+        else:
+            print("Invalid metric_time")
+
+    worker_threads = []
+    for city in bounding_boxes:
+        carbon_computer = CarbonComputation(city, bounding_boxes[city])
+        schedule_co2_tracking(
+            carbon_computer,
+            lambda: (update_total_co2_emission_job(username, password, carbon_computer)),
+            metric_time,
+            interval,
+        )
+
+        # create worker thread for every city
+        worker_thread = threading.Thread(target=carbon_computer.worker_main)
+        worker_thread.daemon = True
+        worker_threads.append(worker_thread)
+
+    return worker_threads
 
 
 def update_total_co2_emission_job(
@@ -67,7 +112,7 @@ def update_total_co2_emission_job(
 ) -> None:
     """Wrapper function for updating the total co2 emission.
 
-    Should be executed as a job by the schedule library
+    Should be executed as a job by the schedule library.
 
     Args:
         username (str): The username for authentication.
