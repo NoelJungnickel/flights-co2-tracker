@@ -3,7 +3,7 @@ import threading
 import time
 import configparser
 from redis import Redis
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Optional
 from argparse import ArgumentParser
 
 from opensky_network import get_states
@@ -31,10 +31,8 @@ def main() -> None:
 
     for section in config.sections():
         if "username" in config[section] and "password" in config[section]:
-            username = config[section]["username"]
-            password = config[section]["password"]
-            usernames[section] = username
-            passwords[section] = password
+            usernames[section] = config[section]["username"]
+            passwords[section] = config[section]["password"]
 
     # Connect to Redis Database
     try:
@@ -52,8 +50,8 @@ def main() -> None:
 
     # Iterate over the bounding boxes and schedule a separate thread for each box
     for city, bounding_box in bounding_boxes.items():
-        username = usernames.get(city)
-        password = passwords.get(city)
+        username: Optional[str] = usernames.get(city)
+        password: Optional[str] = passwords.get(city)
 
         if username and password:
             carbon_computation = CarbonComputation(city, bounding_box)
