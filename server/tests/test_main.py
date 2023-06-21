@@ -2,13 +2,13 @@ import threading
 import schedule
 import time
 from unittest.mock import patch
-from calculate_co2 import CarbonComputation
 from main import create_carbon_computer_workers
 import ctypes
-
+import typing
 
 # https://stackoverflow.com/questions/36484151/throw-an-exception-into-another-thread
-def ctype_async_raise(target_tid: int, exception: Exception):
+@typing.no_type_check
+def ctype_async_raise(target_tid, exception):
     """Raises an exception to a specified thread.
 
     Args:
@@ -26,14 +26,19 @@ def ctype_async_raise(target_tid: int, exception: Exception):
         ctypes.pythonapi.PyThreadState_SetAsyncExc(target_tid, None)
         raise SystemError("PyThreadState_SetAsyncExc failed")
 
-
-def mock_update_total_co2_emission_job(username: str, password: str, carbon_computer: CarbonComputation) -> None:
+@typing.no_type_check
+def mock_update_total_co2_emission_job(
+    username, password, carbon_computer
+):
+    """Mocks the update_total_co2_emission_job function."""
     print(f"Thread {threading.current_thread().ident} - calculating co2 emission")
     time.sleep(2)
     print(f"Thread {threading.current_thread().ident} - finished!")
 
 
 class TestMain:
+    """Basic class to group tests on main.py."""
+
     bounding_boxes = {
         "berlin": (52.3418234221, 13.0882097323, 52.6697240587, 13.7606105539),
     }
@@ -43,11 +48,12 @@ class TestMain:
     # number of running threads should be:
     # thread to run scheduled jobs (the one thats running main) +
     # #cities we're tracking
+    @typing.no_type_check
     @patch("main.update_total_co2_emission_job", wraps=mock_update_total_co2_emission_job)
-    def test_correct_number_of_running_threads(self, mock_update_total_co2_emission_job) -> None:
-        """Tests the correct number of threads
-        
-        """
+    def test_correct_number_of_running_threads(
+        self, mock_update_total_co2_emission_job
+    ):
+        """Tests the correct number of threads."""
         bounding_boxes = self.bounding_boxes
 
         worker_threads = create_carbon_computer_workers(
@@ -72,6 +78,7 @@ class TestMain:
             # raise an exception to worker thread to stop it
             ctype_async_raise(worker_thread.ident, KeyboardInterrupt)
 
+    @typing.no_type_check
     @patch("main.update_total_co2_emission_job", wraps=mock_update_total_co2_emission_job)
     def test_create_correct_num_carbon_computer_workers(
         self, mock_update_total_co2_emission_job

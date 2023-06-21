@@ -26,7 +26,7 @@ class CarbonComputation:
         self.jobqueue: queue.Queue = queue.Queue()
 
     def worker_main(self) -> None:
-        """Entry point for the worker thread of a given city"""
+        """Entry point for the worker thread of a given city."""
         while 1:
             try:
                 job_func = self.jobqueue.get()
