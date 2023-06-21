@@ -2,3 +2,4 @@ dockerfile
 __pycache__
 .ruff_cache
 .mypy_cache
+config.ini
