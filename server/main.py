@@ -33,19 +33,6 @@ def main() -> None:
         if "username" in config[section] and "password" in config[section]:
             usernames[section] = config[section]["username"]
             passwords[section] = config[section]["password"]
-    config_path = args.config
-
-    # Read credentials from config file
-    usernames = {}
-    passwords = {}
-
-    config = configparser.ConfigParser()
-    config.read(config_path)
-
-    for section in config.sections():
-        if "username" in config[section] and "password" in config[section]:
-            usernames[section] = config[section]["username"]
-            passwords[section] = config[section]["password"]
 
     # Connect to Redis Database
     try:
@@ -58,7 +45,7 @@ def main() -> None:
         "berlin": (52.3418234221, 13.0882097323, 52.6697240587, 13.7606105539),
         "paris": (48.753020, 2.138901, 48.937837, 2.493896),
         "london": (51.344500, -0.388934, 51.643400, 0.194758),
-        "madrid": (40.312817, -3.831991, 40.561061, -3.524374)
+        "madrid": (40.312817, -3.831991, 40.561061, -3.524374),
     }
 
     worker_threads = create_carbon_computer_workers(
