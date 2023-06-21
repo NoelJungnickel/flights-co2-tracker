@@ -44,8 +44,8 @@ def main() -> None:
     bounding_boxes = {
         "berlin": (52.3418234221, 13.0882097323, 52.6697240587, 13.7606105539),
         "paris": (48.753020, 2.138901, 48.937837, 2.493896),
-        #"london": (51.344500, -0.388934, 51.643400, 0.194758),
-        #"madrid": (40.312817, -3.831991, 40.561061, -3.524374)
+        # "london": (51.344500, -0.388934, 51.643400, 0.194758),
+        # "madrid": (40.312817, -3.831991, 40.561061, -3.524374)
     }
 
     worker_threads = create_carbon_computer_workers(
@@ -66,8 +66,8 @@ def main() -> None:
 
 def create_carbon_computer_workers(
     bounding_boxes: dict[str, Tuple[float, float, float, float]],
-    usernames: str,
-    passwords: str,
+    usernames: dict[str, str],
+    passwords: dict[str, str],
     metric_time: str,
     interval: int,
 ) -> list[threading.Thread]:
@@ -76,8 +76,8 @@ def create_carbon_computer_workers(
     Args:
         bounding_boxes (dict[str, Tuple]): A dictionary of bounding boxes of the
             watched airspace.
-        usernames (dict): A dictionary of usernames for authentication.
-        passwords (dict): A dictionary of passwords for authentication.
+        usernames (dict[str, str]): A dictionary of usernames for authentication.
+        passwords (dict[str, str]): A dictionary of passwords for authentication.
         carbon_computer (CarbonComputation): Class instance to handle the computation
             of carbon emission in specific airspace.
         metric_time (str): The measure of time intervals. Can be seconds,
@@ -110,9 +110,15 @@ def create_carbon_computer_workers(
 
         if username and password:
             carbon_computer = CarbonComputation(city, bounding_box)
+            username_not_none: str = username
+            password_not_none: str = password
             schedule_co2_tracking(
                 carbon_computer,
-                lambda: (update_total_co2_emission_job(username, password, carbon_computer)),
+                lambda: (
+                    update_total_co2_emission_job(
+                        username_not_none, password_not_none, carbon_computer
+                    )
+                ),
                 metric_time,
                 interval,
             )
