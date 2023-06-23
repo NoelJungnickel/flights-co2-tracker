@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from redis import Redis
-import uvicorn
 
 
 class FastAPIWithRedis:
@@ -40,25 +39,3 @@ class FastAPIWithRedis:
             """Return total carbon emmision of given city from database."""
             total_value = self.redis.hget("total", airspace)
             return float(total_value.decode()) if total_value else 0.0
-
-    def run(self) -> None:
-        """Run the FastAPI application with given host and port."""
-        uvicorn.run(self.app, host=self.host, port=self.port)
-
-
-API_HOST = "127.0.0.1"
-API_PORT = 8000
-REDIS_HOST = "127.0.0.1"
-REDIS_PORT = 6379
-
-cities = ["berlin"]
-
-
-def main() -> None:
-    """Entry point of the application."""
-    api = FastAPIWithRedis(API_HOST, API_PORT, REDIS_HOST, REDIS_PORT)
-    api.run()
-
-
-if __name__ == "__main__":
-    main()
