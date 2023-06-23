@@ -45,23 +45,15 @@ def main() -> None:
         "berlin": (52.3418234221, 13.0882097323, 52.6697240587, 13.7606105539),
         "paris": (48.753020, 2.138901, 48.937837, 2.493896),
         "london": (51.344500, -0.388934, 51.643400, 0.194758),
-        "madrid": (40.312817, -3.831991, 40.561061, -3.524374)
+        "madrid": (40.312817, -3.831991, 40.561061, -3.524374),
     }
 
-    # Iterate over the bounding boxes and schedule a separate thread for each box
-    for city, bounding_box in bounding_boxes.items():
-        username: Optional[str] = usernames.get(city)
-        password: Optional[str] = passwords.get(city)
+    worker_threads = create_carbon_computer_workers(
+        bounding_boxes, usernames, passwords, "minutes", 1
+    )
 
-        if username and password:
-            carbon_computation = CarbonComputation(city, bounding_box)
-            schedule.every(1).minutes.do(
-                run_threaded,
-                update_total_co2_emission_job,
-                args=(username, password, carbon_computation),
-            )
-        else:
-            print(f"Missing credentials for {city}. Skipping...")
+    for worker_thread in worker_threads:
+        worker_thread.start()
 
     # start the first job now instead of waiting 1 minute
     schedule.run_all()
@@ -72,16 +64,73 @@ def main() -> None:
         time.sleep(1)
 
 
-def run_threaded(job_func: Callable, args: Tuple) -> None:
-    """Runs a function in a separate thread.
+def create_carbon_computer_workers(
+    bounding_boxes: dict[str, Tuple[float, float, float, float]],
+    usernames: dict[str, str],
+    passwords: dict[str, str],
+    metric_time: str,
+    interval: int,
+) -> list[threading.Thread]:
+    """Creates worker threads for each city.
 
     Args:
-        job_func (Callable): The function to be executed in a separate thread
-        args (tuple): The arguments to be passed to the function when it is called.
+        bounding_boxes (dict[str, Tuple]): A dictionary of bounding boxes of the
+            watched airspace.
+        usernames (dict[str, str]): A dictionary of usernames for authentication.
+        passwords (dict[str, str]): A dictionary of passwords for authentication.
+        carbon_computer (CarbonComputation): Class instance to handle the computation
+            of carbon emission in specific airspace.
+        metric_time (str): The measure of time intervals. Can be seconds,
+            minutes, hours, days or weeks.
+        interval (int): The interval at which the scheduled job should be executed
 
     """
-    job_thread = threading.Thread(target=job_func, args=args)
-    job_thread.start()
+
+    def schedule_co2_tracking(
+        carbon_computer: CarbonComputation, job: Callable, metric_time: str, interval: int
+    ) -> None:
+        time_mapping = {
+            "seconds": schedule.every(interval).seconds,
+            "minutes": schedule.every(interval).minutes,
+            "hours": schedule.every(interval).hours,
+            "days": schedule.every(interval).days,
+            "weeks": schedule.every(interval).weeks,
+        }
+
+        schedule_func = time_mapping.get(metric_time)
+        if schedule_func:
+            schedule_func.do(carbon_computer.jobqueue.put, job)
+        else:
+            print("Invalid metric_time")
+
+    worker_threads = []
+    for city, bounding_box in bounding_boxes.items():
+        username: Optional[str] = usernames.get(city)
+        password: Optional[str] = passwords.get(city)
+
+        if username and password:
+            carbon_computer = CarbonComputation(city, bounding_box)
+            username_not_none: str = username
+            password_not_none: str = password
+            schedule_co2_tracking(
+                carbon_computer,
+                lambda: (
+                    update_total_co2_emission_job(
+                        username_not_none, password_not_none, carbon_computer
+                    )
+                ),
+                metric_time,
+                interval,
+            )
+
+            # create worker thread for every city
+            worker_thread = threading.Thread(target=carbon_computer.worker_main)
+            worker_thread.daemon = True
+            worker_threads.append(worker_thread)
+        else:
+            print(f"Missing credentials for {city}. Skipping...")
+
+    return worker_threads
 
 
 def update_total_co2_emission_job(
@@ -89,7 +138,7 @@ def update_total_co2_emission_job(
 ) -> None:
     """Wrapper function for updating the total co2 emission.
 
-    Should be executed as a job by the schedule library
+    Should be executed as a job by the schedule library.
 
     Args:
         username (str): The username for authentication.
