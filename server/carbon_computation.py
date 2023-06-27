@@ -122,6 +122,10 @@ class CarbonComputation:
             co2_emission = self.calculate_co2_emission(total_duration)
             co2_emission_per_aircraft.append(co2_emission)
 
+        # remove aircrafts no longer in airspace
+        for aircraft_id in aircraft_id_not_in_airspace:
+            del self.aircrafts_in_airspace[aircraft_id]
+
         return sum(co2_emission_per_aircraft)
 
     def update_aircrafts_in_airspace(self, states: list, request_time: int) -> None:
