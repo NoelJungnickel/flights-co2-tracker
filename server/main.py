@@ -22,7 +22,9 @@ redis = Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 def main() -> None:
     """Entry point of the application."""
     parser = ArgumentParser()
-    parser.add_argument("--config", type=str, help="Path to the configuration file")
+    parser.add_argument(
+        "--config", type=str, help="Path to the configuration file", default="config.ini"
+    )
     args = parser.parse_args()
 
     config_path = args.config
@@ -66,7 +68,7 @@ def main() -> None:
 
         # Start the server api in a seperate process
         api_process = Process(target=run_fastapi)
-        #api_process.start()
+        api_process.start()
 
         # call opensky api every (1 + calculation time) minute(s)
         while True:
