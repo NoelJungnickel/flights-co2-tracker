@@ -2,6 +2,7 @@ from geopy import distance as geopy_distance  # type: ignore
 import math
 from typing import Tuple
 import queue
+from flight_fuel_consumption_api import get_flight_fuel_consumption
 
 
 class CarbonComputation:
@@ -37,21 +38,30 @@ class CarbonComputation:
                 break
 
     def get_co2_emission(
-        self, states: list, request_time: int, exit_time_threshold: int = 60
+        self, states: list, request_time: int, exit_time_threshold: int = 75
     ) -> float:
-        """Updates the global variable total_co2_emission and stores it in Redis.
+        """Returns the CO2 emission of flights in the current request-response cycle.
 
-            1. Keeps track of the aircraft state from current and previous requests
-                and store it in the aircrafts_in_airspace global variable.
-            2. Determines which aircrafts are no longer in the airspace.
-            3. Calculates the duration of those aircrafts in the airspace.
-            4. Calculates the CO2 emission of those aircrafts based on their
-                duration in the airspace.
-            5. Sums the CO2 emission of each aircraft.
-            6. Add the sum of the CO2 emission of each aircraft to the total_co2_emission
-                global variable.
-            7. Store the value of total_co2_emission in Redis.
+            1. Keep track of the aircraft state from current and previous requests
+                and store it in the aircrafts_in_airspace instance variable.
+            2. If an aircrafts previous state is known, calculate the distance
+                between the aircraft's previous position and the current position.
+            3. Determine which aircrafts are no longer in the airspace. If said aircraft's
+                latest position is on ground, then no further calculations are needed.
+                Otherwise, calculate the distance from the latest recorded position to
+                the edge of the bounding box.
+            4. Create a list of (icao24, distance) Tuples and query the flight fuel
+                consumption api with it.
+            5. Create two lists from the API response:
+                - List of CO2 emissions of aircrafts,
+                    which have their fuel consumption rate known by the API.
+                - List of icao24 codes of aircrafts,
+                    which don't have their fuel consumption rate known by the API.
+            6. Calculate the CO2 emission of aircrafts with unknown fuel consumption rate.
+            7. Sum the CO2 emission of both lists.
             8. Remove aircrafts that are no longer in the airspace.
+            9. Remove curr_distance attribute because it should not carry over
+                to the next request-response cycle.
 
         Args:
             states (list): A list of aircraft states received from /states/all endpoint
@@ -72,64 +82,82 @@ class CarbonComputation:
             if request_time - aircraft["last_update"] >= exit_time_threshold:
                 aircraft_id_not_in_airspace.append(aircraft_id)
 
-        print(f"aircrafts in airspace: {self.aircrafts_in_airspace}")
         # calculate the CO2 emission of aircrafts that are no longer in the airspace
         # as the state object of an aircraft may still appear in the next request cycle.
-        co2_emission_per_aircraft = []
         for aircraft_id in aircraft_id_not_in_airspace:
-            # calculate the duration that the aircraft was in the airspace
-            positions = self.aircrafts_in_airspace[aircraft_id]["positions"]
-            durations = []
+            aircraft = self.aircrafts_in_airspace[aircraft_id]
+            state = aircraft["curr_state"]
 
-            for index, position in enumerate(positions):
-                if index == len(positions) - 1:
-                    if position["on_ground"]:
-                        continue
-                    # calculate duration to the edge of the bounding box
-                    # the edge is dictated by the plane's true_track
+            if state["on_ground"]:
+                continue
 
-                    # Get the position, where the aircraft would intersect
-                    # with the edge of the bounding box, if it were to keep
-                    # heading in the same direction until it reaches the edge
-                    # of the bounding box
-                    edge_position = self.get_edge_position(
-                        position["true_track"],
-                        self.bounding_box,
-                        (position["longitude"], position["latitude"]),
-                    )
+            edge_position = self.get_edge_position(
+                state["true_track"],
+                self.bounding_box,
+                (state["longitude"], state["latitude"]),
+            )
+            # calculate the distance that the aircraft was in the airspace
+            distance = geopy_distance.great_circle(
+                (state["latitude"], state["longitude"]),
+                (edge_position[0], edge_position[1]),
+            ).km
 
-                    # get the duration it would take to get to the edge position
-                    duration = self.calculate_duration(
-                        (position["latitude"], position["longitude"]),
-                        (edge_position[0], edge_position[1]),
-                        position["velocity"],
-                    )
-                    durations.append(duration)
-                    continue
+            if distance > 0:
+                self.aircrafts_in_airspace[aircraft_id]["curr_distance"] = distance
 
-                next_position = positions[index + 1]
+        print(f"aircrafts in airspace: {self.aircrafts_in_airspace}")
 
-                duration = self.calculate_duration(
-                    (position["latitude"], position["longitude"]),
-                    (next_position["latitude"], next_position["longitude"]),
-                    position["velocity"],
-                )
-                durations.append(duration)
-            print(f"aircraft_id: {aircraft_id}, durations: {durations}")
-            total_duration = sum(durations)
+        # create icao24_distance_list
+        icao24_distance_list = [
+            (icao24, geopy_distance.Distance(kilometers=state["curr_distance"]).nautical)
+            for icao24, state in self.aircrafts_in_airspace.items()
+            if state.get("curr_distance")
+        ]
+        print(icao24_distance_list)
 
-            # calculate the CO2 emission
-            co2_emission = self.calculate_co2_emission(total_duration)
-            co2_emission_per_aircraft.append(co2_emission)
+        new_co2_emission = 0
+        if icao24_distance_list:
+            # get co2 emission from flight fuel consumption api
+            flight_fuel_list = get_flight_fuel_consumption(icao24_distance_list)
+
+            if flight_fuel_list:
+                # list of co2 emissions of aircrafts with known fuel consumption
+                co2_list = [
+                    flight["co2"] for flight in flight_fuel_list if flight.get("co2")
+                ]
+
+                # list of icao24 codes with unknown fuel consumption
+                no_co2_icao24_list = [
+                    flight["icao24"]
+                    for flight in flight_fuel_list
+                    if flight.get("co2") is None
+                ]
+
+                print(f"no_co2_icao24: {no_co2_icao24_list}")
+
+                assumed_co2_list = [
+                    self.calculate_co2_emission(state["curr_distance"])
+                    for icao24, state in self.aircrafts_in_airspace.items()
+                    if icao24 in no_co2_icao24_list
+                    and state.get("curr_distance") is not None
+                ]
+
+                new_co2_emission += sum(co2_list) + sum(assumed_co2_list)
+        print(f"aircrafts NOT in airspace: {aircraft_id_not_in_airspace}")
 
         # remove aircrafts no longer in airspace
         for aircraft_id in aircraft_id_not_in_airspace:
             del self.aircrafts_in_airspace[aircraft_id]
 
-        return sum(co2_emission_per_aircraft)
+        # remove curr_distance for aircrafts in airspace
+        for icao24, state in self.aircrafts_in_airspace.items():
+            if state.get("curr_distance"):
+                del state["curr_distance"]
+
+        return new_co2_emission
 
     def update_aircrafts_in_airspace(self, states: list, request_time: int) -> None:
-        """Updates the global variable aircrafts_in_airspace.
+        """Updates the instance variable aircrafts_in_airspace.
 
         Args:
             states (list): A list of aircraft states received from /states/all endpoint
@@ -153,7 +181,7 @@ class CarbonComputation:
             ):
                 continue
 
-            position = {
+            curr_state = {
                 "time_position": time_position,
                 "longitude": longitude,
                 "latitude": latitude,
@@ -162,38 +190,28 @@ class CarbonComputation:
                 "true_track": true_track,
             }
             if self.aircrafts_in_airspace.get(state[0]) is not None:
+                prev_state = self.aircrafts_in_airspace[state[0]]["curr_state"]
+                prev_position = (prev_state["latitude"], prev_state["longitude"])
+                curr_position = (curr_state["latitude"], curr_state["longitude"])
+
+                # calculate distance between previous and current position
+                distance = geopy_distance.great_circle(prev_position, curr_position).km
+                if distance > 0:
+                    self.aircrafts_in_airspace[state[0]]["curr_distance"] = distance
+
+                # if distance > 0:
+                #     icao24_distance_list.append({
+                #         "icao24": state[0],
+                #         "distance": distance
+                #     })
+
                 self.aircrafts_in_airspace[state[0]]["last_update"] = request_time
-                self.aircrafts_in_airspace[state[0]]["positions"].append(position)
+                self.aircrafts_in_airspace[state[0]]["curr_state"] = curr_state
             else:
                 self.aircrafts_in_airspace[state[0]] = {
                     "last_update": request_time,
-                    "positions": [position],
+                    "curr_state": curr_state,
                 }
-
-    def calculate_duration(
-        self, point1: Tuple[float, float], point2: Tuple[float, float], velocity: float
-    ) -> float:
-        """Calculates duration of travel from one point to another with constant velocity.
-
-        Args:
-            point1 (tuple[float,float]): The first geographical point in degrees and
-                in the format (latitude, longitude).
-            point2 (tuple[float, float]): The second geographical point in degrees and
-                in the format (latitude, longitude).
-            velocity (float): The speed of the aircraft in meters per second.
-
-        Returns:
-            float: The duration in seconds to travel from point1 to point2 with
-                constant velocity.
-        """
-        if velocity == 0:
-            return 0.0
-
-        # Get the distance between the two points in kilometers
-        distance = geopy_distance.great_circle(point1, point2).km
-        # Calculate the time required to travel the distance at the given velocity.
-        time = (distance * 1000) / velocity
-        return time
 
     def get_edge_position(
         self,
@@ -305,18 +323,18 @@ class CarbonComputation:
         assert False, "Unreachable code - No quadrant matches"
 
     def calculate_co2_emission(
-        self, duration: float, fuel_consumption_rate: float = 378.54
+        self, distance: float, fuel_consumption_rate: float = 3.0
     ) -> float:
         """Calculates the amount of CO2 emission of a flight.
 
         Args:
-            duration (float): The duration of the flight in seconds.
+            distance (float): The distance of the (partial-)flight in km.
             fuel_consumption_rate (float, optional): The rate of fuel consumption
-                of an aircraft in kilograms per hour. Defaults to 378.54 kg/hour.
+                of an aircraft in kilograms per kilometers. Defaults to 3.0 kg/km
 
         Returns:
             float: The amount of CO2 emission in kilograms.
         """
-        fuel_used_kg = fuel_consumption_rate * (duration / 3600)
+        fuel_used_kg = fuel_consumption_rate * distance
         co2_kg = fuel_used_kg * 3.15
         return co2_kg
