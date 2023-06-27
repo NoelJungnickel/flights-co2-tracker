@@ -1,6 +1,6 @@
 from geopy import distance as geopy_distance  # type: ignore
 import math
-from typing import Tuple
+from typing import Tuple, Dict, Any, List
 import queue
 
 
@@ -11,10 +11,8 @@ class CarbonComputation:
         airspace_name (str): Name of watched airspace (e.g Berlin).
         bounding_box (Tuple): Bounding box of the watched airspace.
             bounding box = (lamin, lomin, lamax, lomax)
-                (lamin, lomin) -> south west
-                (lamax, lomin) -> north west
-                (lamax, lomax) -> north east
-                (lamin, lomax) -> south east
+                lamin = south border, lamax = north border
+                lomin = west border, lomax = east border
     """
 
     def __init__(
@@ -22,7 +20,7 @@ class CarbonComputation:
     ) -> None:
         self.airspace_name: str = airspace_name
         self.bounding_box: Tuple[float, float, float, float] = bounding_box
-        self.aircrafts_in_airspace: dict[str, dict] = {}
+        self.aircrafts_in_airspace: Dict = {}
         self.jobqueue: queue.Queue = queue.Queue()
 
     def worker_main(self) -> None:
@@ -37,160 +35,111 @@ class CarbonComputation:
                 break
 
     def get_co2_emission(
-        self, states: list, request_time: int, exit_time_threshold: int = 60
+        self, states: List[List[Any]], exit_time_threshold: int = 120
     ) -> float:
-        """Updates the global variable total_co2_emission and stores it in Redis.
+        """Returns new carbon emission given new airspace state information.
 
-            1. Keeps track of the aircraft state from current and previous requests
-                and store it in the aircrafts_in_airspace global variable.
-            2. Determines which aircrafts are no longer in the airspace.
-            3. Calculates the duration of those aircrafts in the airspace.
-            4. Calculates the CO2 emission of those aircrafts based on their
-                duration in the airspace.
-            5. Sums the CO2 emission of each aircraft.
-            6. Add the sum of the CO2 emission of each aircraft to the total_co2_emission
-                global variable.
-            7. Store the value of total_co2_emission in Redis.
-            8. Remove aircrafts that are no longer in the airspace.
+            1. Brings the states vector to a better representation containing the useful
+                information for each aircraft in a dictionary
+            2. Calculates the carbon emission for all aircrafts that did not leave the
+                airspace since the last time data was received.
+            3. Calculates the carbon emission for all aircrfts that die leave our
+                airspace since the last time data was received by estimating the duration
+                it spend in the watched airspace.
+            4. Update the airspace data class variable to the reflect the current airspace
+                data
 
         Args:
             states (list): A list of aircraft states received from /states/all endpoint
                 of the OpenSky Network API.
-            request_time (int): The time that the request was sent in seconds since epoch.
             exit_time_threshold (int): The amount of time needed to determine that
                 the  aircraft is no longer in the airspace. Defaults to 60 seconds.
+
+        Returns:
+            float: The new carbon emission that was calculated.
         """
-        self.update_aircrafts_in_airspace(states, request_time)
+        current_aircrafts = self.transform_state_vector(states)
 
-        # find out which aircrafts are no longer in the airspace
-        aircraft_id_not_in_airspace = []
-        for aircraft_id in self.aircrafts_in_airspace:
+        new_co2_emission = 0.0
+
+        # Compute carbon emission for aircrafts, which did not leave the airspace
+        aircraft_id_still_in_airspace = list(
+            set(current_aircrafts.keys()) & set(self.aircrafts_in_airspace.keys())
+        )
+        for aircraft_id in aircraft_id_still_in_airspace:
             aircraft = self.aircrafts_in_airspace[aircraft_id]
+            duration = self.calculate_duration(
+                old_pos=aircraft["position"],
+                new_pos=current_aircrafts[aircraft_id]["position"],
+                velocity=aircraft["velocity"],
+            )
+            new_co2_emission += self.calculate_co2_emission(duration)
 
-            # if the last position update was more than x seconds ago,
-            # then assume its not in the airspace anymore
-            if request_time - aircraft["last_update"] >= exit_time_threshold:
-                aircraft_id_not_in_airspace.append(aircraft_id)
+        # Compute carbon emission for aircrafts, which did leave the airspace
+        aircraft_ids_not_in_airspace = list(
+            set(self.aircrafts_in_airspace.keys()) - set(current_aircrafts.keys())
+        )
+        for aircraft_id in aircraft_ids_not_in_airspace:
+            aircraft = self.aircrafts_in_airspace[aircraft_id]
+            duration = self.calculate_duration(
+                old_pos=aircraft["position"],
+                new_pos=self.get_edge_position(
+                    aircraft["true_track"], aircraft["position"]
+                ),
+                velocity=aircraft["velocity"],
+            )
+            new_co2_emission += self.calculate_co2_emission(duration)
 
-        print(f"aircrafts in airspace: {self.aircrafts_in_airspace}")
-        # calculate the CO2 emission of aircrafts that are no longer in the airspace
-        # as the state object of an aircraft may still appear in the next request cycle.
-        co2_emission_per_aircraft = []
-        for aircraft_id in aircraft_id_not_in_airspace:
-            # calculate the duration that the aircraft was in the airspace
-            positions = self.aircrafts_in_airspace[aircraft_id]["positions"]
-            durations = []
+        self.aircrafts_in_airspace = current_aircrafts
 
-            for index, position in enumerate(positions):
-                if index == len(positions) - 1:
-                    if position["on_ground"]:
-                        continue
-                    # calculate duration to the edge of the bounding box
-                    # the edge is dictated by the plane's true_track
+        return new_co2_emission
 
-                    # Get the position, where the aircraft would intersect
-                    # with the edge of the bounding box, if it were to keep
-                    # heading in the same direction until it reaches the edge
-                    # of the bounding box
-                    edge_position = self.get_edge_position(
-                        position["true_track"],
-                        self.bounding_box,
-                        (position["longitude"], position["latitude"]),
-                    )
-
-                    # get the duration it would take to get to the edge position
-                    duration = self.calculate_duration(
-                        (position["latitude"], position["longitude"]),
-                        (edge_position[0], edge_position[1]),
-                        position["velocity"],
-                    )
-                    durations.append(duration)
-                    continue
-
-                next_position = positions[index + 1]
-
-                duration = self.calculate_duration(
-                    (position["latitude"], position["longitude"]),
-                    (next_position["latitude"], next_position["longitude"]),
-                    position["velocity"],
-                )
-                durations.append(duration)
-            print(f"aircraft_id: {aircraft_id}, durations: {durations}")
-            total_duration = sum(durations)
-
-            # calculate the CO2 emission
-            co2_emission = self.calculate_co2_emission(total_duration)
-            co2_emission_per_aircraft.append(co2_emission)
-
-        # remove aircrafts no longer in airspace
-        for aircraft_id in aircraft_id_not_in_airspace:
-            del self.aircrafts_in_airspace[aircraft_id]
-
-        return sum(co2_emission_per_aircraft)
-
-    def update_aircrafts_in_airspace(self, states: list, request_time: int) -> None:
-        """Updates the global variable aircrafts_in_airspace.
+    def transform_state_vector(
+        self, states: List[List[Any]]
+    ) -> Dict[str, Dict[str, Any]]:
+        """Transforms states into dictionary containing the useful information.
 
         Args:
-            states (list): A list of aircraft states received from /states/all endpoint
-                of the OpenSky Network API.
-            request_time (int): The time that the request was sent in seconds since epoch
+            states (List[Dict[str, Any]]): An airstate vector in the opensky format to
+                be converted.
+
+        Returns:
+            Dict[str, Any]: Dictionary representing the airspace. Keys are ids of
+                aircrafts and values are dictionaries with data containing position,
+                velocity and true_track.
         """
+        current_aircrafts = {}
         for state in states:
-            time_position = state[3]
-            longitude = state[5]
-            latitude = state[6]
-            on_ground = state[8]
-            velocity = state[9]
-            true_track = state[10]
-
-            # longitude, latitude, velocity, true_track can be null
-            if (
-                longitude is None
-                or latitude is None
-                or velocity is None
-                or true_track is None
-            ):
-                continue
-
-            position = {
-                "time_position": time_position,
-                "longitude": longitude,
-                "latitude": latitude,
-                "on_ground": on_ground,
-                "velocity": velocity,
-                "true_track": true_track,
-            }
-            if self.aircrafts_in_airspace.get(state[0]) is not None:
-                self.aircrafts_in_airspace[state[0]]["last_update"] = request_time
-                self.aircrafts_in_airspace[state[0]]["positions"].append(position)
-            else:
-                self.aircrafts_in_airspace[state[0]] = {
-                    "last_update": request_time,
-                    "positions": [position],
+            if state[5] and state[6] and state[9] and state[10]:
+                current_aircrafts[state[0]] = {
+                    "position": (state[6], state[5]),
+                    "on_ground": state[8],
+                    "velocity": state[9],
+                    "true_track": state[10],
                 }
+        return current_aircrafts
 
     def calculate_duration(
-        self, point1: Tuple[float, float], point2: Tuple[float, float], velocity: float
+        self, old_pos: Tuple[float, float], new_pos: Tuple[float, float], velocity: float
     ) -> float:
         """Calculates duration of travel from one point to another with constant velocity.
 
         Args:
-            point1 (tuple[float,float]): The first geographical point in degrees and
+            old_pos (tuple[float,float]): The first geographical point in degrees and
                 in the format (latitude, longitude).
-            point2 (tuple[float, float]): The second geographical point in degrees and
+            new_pos (tuple[float, float]): The second geographical point in degrees and
                 in the format (latitude, longitude).
             velocity (float): The speed of the aircraft in meters per second.
 
         Returns:
-            float: The duration in seconds to travel from point1 to point2 with
+            float: The duration in seconds to travel from old_pos to new_pos with
                 constant velocity.
         """
         if velocity == 0:
             return 0.0
 
         # Get the distance between the two points in kilometers
-        distance = geopy_distance.great_circle(point1, point2).km
+        distance = geopy_distance.great_circle(old_pos, new_pos).km
         # Calculate the time required to travel the distance at the given velocity.
         time = (distance * 1000) / velocity
         return time
@@ -198,7 +147,6 @@ class CarbonComputation:
     def get_edge_position(
         self,
         true_track: float,
-        bounding_box: Tuple[float, float, float, float],
         position: Tuple[float, float],
     ) -> Tuple[float, float]:
         """Calculates the distance to the bounding box edge.
@@ -206,23 +154,16 @@ class CarbonComputation:
         Args:
             true_track (float): The direction of the aircraft in decimal degrees,
                 measured clockwise from north (north = 0).
-            bounding_box (tuple[float, float, float, float]): A tuple containing
-                the coordinates of the bounding box in the format
-                [lamin, lomin, lamax, lomax].
-            position (tuple[float, float]): The geographical point of the aircraft
-                in degrees and in the format (longitude, latitude).
+            position (tuple[float, float]): The geographical coordinates of the aircraft
+                in degrees and in the format (latitude, longitude).
 
         Returns:
             tuple[float, float]: The geographical coordinates (latitude, longitude)
                 representing the edge position towards which the aircraft is heading.
         """
-        lamin = bounding_box[0]
-        lomin = bounding_box[1]
-        lamax = bounding_box[2]
-        lomax = bounding_box[3]
+        lamin, lomin, lamax, lomax = self.bounding_box
 
-        pos_la = position[1]
-        pos_lo = position[0]
+        pos_la, pos_lo = position
 
         true_track %= 360
 
