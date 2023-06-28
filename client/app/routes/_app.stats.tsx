@@ -23,7 +23,7 @@ export async function loader(): Promise<TypedResponse<Stats>> {
   const totalBerlinCO2KgReponse = await fetch(API_URL);
 
   if (!totalBerlinCO2KgReponse) {
-    throw new Response("Server not responding", {
+    throw new Response("Internal Server Error", {
       status: 500,
     });
   }
@@ -61,8 +61,8 @@ export function ErrorBoundary() {
 
   if (isRouteErrorResponse(error)) {
     return (
-      <div>
-        <h1>
+      <div className="flex flex-col justify-center text-xl text-slate-300 sm:text-3xl">
+        <h1 className="text-center">
           {error.status} {error.statusText}
         </h1>
         <p>{error.data}</p>
