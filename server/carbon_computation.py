@@ -1,7 +1,6 @@
 from geopy import distance as geopy_distance  # type: ignore
 import math
 from typing import Tuple, Dict, Any, List
-import queue
 
 
 class CarbonComputation:
@@ -21,18 +20,6 @@ class CarbonComputation:
         self.airspace_name: str = airspace_name
         self.bounding_box: Tuple[float, float, float, float] = bounding_box
         self.aircrafts_in_airspace: Dict = {}
-        self.jobqueue: queue.Queue = queue.Queue()
-
-    def worker_main(self) -> None:
-        """Entry point for the worker thread of a given city."""
-        while 1:
-            try:
-                job_func = self.jobqueue.get()
-                job_func()
-                self.jobqueue.task_done()
-            except KeyboardInterrupt:
-                print(f"{self.airspace_name} worker exiting...")
-                break
 
     def get_co2_emission(
         self, states: List[List[Any]], exit_time_threshold: int = 120
@@ -63,10 +50,10 @@ class CarbonComputation:
         new_co2_emission = 0.0
 
         # Compute carbon emission for aircrafts, which did not leave the airspace
-        aircraft_id_still_in_airspace = list(
+        aircraft_ids_still_in_airspace = list(
             set(current_aircrafts.keys()) & set(self.aircrafts_in_airspace.keys())
         )
-        for aircraft_id in aircraft_id_still_in_airspace:
+        for aircraft_id in aircraft_ids_still_in_airspace:
             aircraft = self.aircrafts_in_airspace[aircraft_id]
             duration = self.calculate_duration(
                 old_pos=aircraft["position"],

@@ -1,11 +1,12 @@
 import schedule
-import threading
 import time
 import configparser
 import uvicorn
+from threading import Thread
 from multiprocessing import Process
 from redis import Redis
-from typing import Callable, Tuple, Optional
+from typing import Callable, Tuple, Optional, List
+from queue import Queue
 from argparse import ArgumentParser
 
 from opensky_network import get_states
@@ -17,6 +18,25 @@ API_PORT = 8000
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = 6379
 redis = Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+
+
+class Worker(Thread):
+    """Class to represent a worker thread managing a job queue."""
+
+    def __init__(self):
+        super().__init__(self)
+        self.jobqueue: Queue = Queue()
+
+    def run(self):
+        """Execute all incoming jobs in the job queue."""
+        while 1:
+            try:
+                job_func = self.jobqueue.get()
+                job_func()
+                self.jobqueue.task_done()
+            except KeyboardInterrupt:
+                print(f"{self.airspace_name} worker exiting...")
+                break
 
 
 def main() -> None:
@@ -91,7 +111,7 @@ def create_carbon_computer_workers(
     passwords: dict[str, str],
     metric_time: str,
     interval: int,
-) -> list[threading.Thread]:
+) -> List[Worker]:
     """Creates worker threads for each city.
 
     Args:
@@ -105,10 +125,12 @@ def create_carbon_computer_workers(
             minutes, hours, days or weeks.
         interval (int): The interval at which the scheduled job should be executed
 
+    Returns:
+        List[Worker]: List of worker threads to be started.
     """
 
     def schedule_co2_tracking(
-        carbon_computer: CarbonComputation, job: Callable, metric_time: str, interval: int
+        worker: Worker, job: Callable, metric_time: str, interval: int
     ) -> None:
         time_mapping = {
             "seconds": schedule.every(interval).seconds,
@@ -120,7 +142,7 @@ def create_carbon_computer_workers(
 
         schedule_func = time_mapping.get(metric_time)
         if schedule_func:
-            schedule_func.do(carbon_computer.jobqueue.put, job)
+            schedule_func.do(worker.jobqueue.put, job)
         else:
             print("Invalid metric_time")
 
@@ -128,13 +150,13 @@ def create_carbon_computer_workers(
     for city, bounding_box in bounding_boxes.items():
         username: Optional[str] = usernames.get(city)
         password: Optional[str] = passwords.get(city)
-
         if username and password:
             carbon_computer = CarbonComputation(city, bounding_box)
             username_not_none: str = username
             password_not_none: str = password
+            worker_thread = Worker()
             schedule_co2_tracking(
-                carbon_computer,
+                worker_thread,
                 lambda: (
                     update_total_co2_emission_job(
                         username_not_none, password_not_none, carbon_computer
@@ -145,7 +167,6 @@ def create_carbon_computer_workers(
             )
 
             # create worker thread for every city
-            worker_thread = threading.Thread(target=carbon_computer.worker_main)
             worker_thread.daemon = True
             worker_threads.append(worker_thread)
         else:
@@ -168,7 +189,7 @@ def update_total_co2_emission_job(
             of carbon emission in specific airspace.
     """
     response = get_states(username, password, carbon_computer.bounding_box)
-
+    print(carbon_computer.airspace_name)
     # Compute new emission (response["states"] can be null)
     if response is not None and response["states"] is not None:
         new_emission = carbon_computer.get_co2_emission(
