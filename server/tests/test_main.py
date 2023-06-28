@@ -6,6 +6,7 @@ from main import create_carbon_computer_workers
 import ctypes
 import typing
 
+
 # https://stackoverflow.com/questions/36484151/throw-an-exception-into-another-thread
 @typing.no_type_check
 def ctype_async_raise(target_tid, exception):
@@ -26,10 +27,9 @@ def ctype_async_raise(target_tid, exception):
         ctypes.pythonapi.PyThreadState_SetAsyncExc(target_tid, None)
         raise SystemError("PyThreadState_SetAsyncExc failed")
 
+
 @typing.no_type_check
-def mock_update_total_co2_emission_job(
-    username, password, carbon_computer
-):
+def mock_update_total_co2_emission_job(username, password, carbon_computer):
     """Mocks the update_total_co2_emission_job function."""
     print(f"Thread {threading.current_thread().ident} - calculating co2 emission")
     time.sleep(2)
@@ -50,9 +50,7 @@ class TestMain:
     # #cities we're tracking
     @typing.no_type_check
     @patch("main.update_total_co2_emission_job", wraps=mock_update_total_co2_emission_job)
-    def test_correct_number_of_running_threads(
-        self, mock_update_total_co2_emission_job
-    ):
+    def test_correct_number_of_running_threads(self, mock_update_total_co2_emission_job):
         """Tests the correct number of threads."""
         bounding_boxes = self.bounding_boxes
 
