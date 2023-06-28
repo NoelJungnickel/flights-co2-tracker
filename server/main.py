@@ -23,11 +23,11 @@ redis = Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 class Worker(Thread):
     """Class to represent a worker thread managing a job queue."""
 
-    def __init__(self):
-        super().__init__(self)
+    def __init__(self) -> None:
+        super().__init__()
         self.jobqueue: Queue = Queue()
 
-    def run(self):
+    def run(self) -> None:
         """Execute all incoming jobs in the job queue."""
         while 1:
             try:
@@ -35,7 +35,6 @@ class Worker(Thread):
                 job_func()
                 self.jobqueue.task_done()
             except KeyboardInterrupt:
-                print(f"{self.airspace_name} worker exiting...")
                 break
 
 
