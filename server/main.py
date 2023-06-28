@@ -2,13 +2,18 @@ import schedule
 import threading
 import time
 import configparser
+import uvicorn
+from multiprocessing import Process
 from redis import Redis
 from typing import Callable, Tuple, Optional
 from argparse import ArgumentParser
 
 from opensky_network import get_states
-from calculate_co2 import CarbonComputation
+from carbon_computation import CarbonComputation
+from server_api import FastAPIWithRedis
 
+API_HOST = "127.0.0.1"
+API_PORT = 8000
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = 6379
 redis = Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
@@ -17,7 +22,9 @@ redis = Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 def main() -> None:
     """Entry point of the application."""
     parser = ArgumentParser()
-    parser.add_argument("--config", type=str, help="Path to the configuration file")
+    parser.add_argument(
+        "--config", type=str, help="Path to the configuration file", default="config.ini"
+    )
     args = parser.parse_args()
 
     config_path = args.config
@@ -48,20 +55,34 @@ def main() -> None:
         "madrid": (40.312817, -3.831991, 40.561061, -3.524374),
     }
 
-    worker_threads = create_carbon_computer_workers(
-        bounding_boxes, usernames, passwords, "minutes", 1
-    )
+    try:
+        worker_threads = create_carbon_computer_workers(
+            bounding_boxes, usernames, passwords, "minutes", 1
+        )
 
-    for worker_thread in worker_threads:
-        worker_thread.start()
+        for worker_thread in worker_threads:
+            worker_thread.start()
 
-    # start the first job now instead of waiting 1 minute
-    schedule.run_all()
+        # start the first job now instead of waiting 1 minute
+        schedule.run_all()
 
-    # call opensky api every (1 + calculation time) minute(s)
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+        # Start the server api in a seperate process
+        api_process = Process(target=run_fastapi)
+        api_process.start()
+
+        # call opensky api every (1 + calculation time) minute(s)
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+    finally:
+        api_process.terminate()
+        api_process.join()
+
+
+def run_fastapi() -> None:
+    """Run the FastAPI application in a separate process."""
+    app = FastAPIWithRedis(API_HOST, API_PORT, REDIS_HOST, REDIS_PORT)
+    uvicorn.run(app.app, host=API_HOST, port=API_PORT)
 
 
 def create_carbon_computer_workers(

@@ -2,4 +2,5 @@ dockerfile
 __pycache__
 .ruff_cache
 .mypy_cache
+.pytest_cache
 config.ini

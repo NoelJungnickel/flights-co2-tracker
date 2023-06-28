@@ -34,3 +34,7 @@ jobs:
     # run static type checker on Python files
     - name: Run type checker
       run: mypy ./
+
+    # run tests
+    - name: Run tests
+      run: python -m pytest
