@@ -15,9 +15,19 @@ type Stats = {
 };
 
 export async function loader(): Promise<TypedResponse<Stats>> {
-  const totalBerlinCO2KgReponse = await fetch(
-    "http://35.210.64.77:8000/api/total/berlin"
-  );
+  let API_URL = "http://35.210.64.77:8000/api/total/berlin";
+  // if (process.env.NODE_ENV === "development") {
+  //   API_URL = "http://127.0.0.1:8000/api/total/berlin";
+  // }
+
+  const totalBerlinCO2KgReponse = await fetch(API_URL);
+
+  if (!totalBerlinCO2KgReponse) {
+    throw new Response("Server not responding", {
+      status: 500,
+    });
+  }
+
   const totalBerlinCO2Kg = await totalBerlinCO2KgReponse.json();
 
   return json({
