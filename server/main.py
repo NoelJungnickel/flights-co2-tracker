@@ -103,6 +103,9 @@ def run_fastapi() -> None:
     app = FastAPIWithRedis(API_HOST, API_PORT, REDIS_HOST, REDIS_PORT)
     uvicorn.run(app.app, host=API_HOST, port=API_PORT)
 
+def create_update_total_co2_emission_job(username, password, carbon_computer):
+    arguments = (username, password, carbon_computer)
+    return lambda args=arguments: update_total_co2_emission_job(*args)
 
 def create_carbon_computer_workers(
     bounding_boxes: dict[str, Tuple[float, float, float, float]],
@@ -154,13 +157,10 @@ def create_carbon_computer_workers(
             username_not_none: str = username
             password_not_none: str = password
             worker_thread = Worker()
+            carbon_computer_job = create_update_total_co2_emission_job(username_not_none, password_not_none, carbon_computer)
             schedule_co2_tracking(
                 worker_thread,
-                lambda: (
-                    update_total_co2_emission_job(
-                        username_not_none, password_not_none, carbon_computer
-                    )
-                ),
+                carbon_computer_job,
                 metric_time,
                 interval,
             )
@@ -188,7 +188,7 @@ def update_total_co2_emission_job(
             of carbon emission in specific airspace.
     """
     response = get_states(username, password, carbon_computer.bounding_box)
-    print(carbon_computer.airspace_name)
+    
     # Compute new emission (response["states"] can be null)
     if response is not None and response["states"] is not None:
         new_emission = carbon_computer.get_co2_emission(
