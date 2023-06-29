@@ -4,20 +4,21 @@ import configparser
 import uvicorn
 from threading import Thread
 from multiprocessing import Process
-from redis import Redis
 from typing import Callable, Tuple, Optional, List
 from queue import Queue
 from argparse import ArgumentParser
 
 from opensky_network import get_states
 from carbon_computation import CarbonComputation
-from server_api import FastAPIWithRedis
+from server_api import FastAPIWithDatabase
+from database import DatabaseError, RedisDatabase
 
 API_HOST = "127.0.0.1"
 API_PORT = 8000
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = 6379
-redis = Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+
+db = RedisDatabase(host=REDIS_HOST, port=REDIS_PORT)
 
 
 class Worker(Thread):
@@ -62,9 +63,9 @@ def main() -> None:
 
     # Connect to Redis Database
     try:
-        redis.info()
-    except Exception:
-        raise RuntimeError("Failed to connect to Redis.")
+        db.is_running()
+    except DatabaseError:
+        raise RuntimeError("Database connection failed.")
 
     # Specify bounding boxes for airspaces to be watched
     bounding_boxes = {
@@ -100,7 +101,7 @@ def main() -> None:
 
 def run_fastapi() -> None:
     """Run the FastAPI application in a separate process."""
-    app = FastAPIWithRedis(API_HOST, API_PORT, REDIS_HOST, REDIS_PORT)
+    app = FastAPIWithDatabase(db, host=API_HOST, port=API_PORT)
     uvicorn.run(app.app, host=API_HOST, port=API_PORT)
 
 
@@ -122,7 +123,7 @@ def create_carbon_computer_workers(
             of carbon emission in specific airspace.
         metric_time (str): The measure of time intervals. Can be seconds,
             minutes, hours, days or weeks.
-        interval (int): The interval at which the scheduled job should be executed
+        interval (int): The interval at which the scheduled job should be executed.
 
     Returns:
         List[Worker]: List of worker threads to be started.
@@ -197,12 +198,9 @@ def update_total_co2_emission_job(
         print(f"New emission in {carbon_computer.airspace_name}: {new_emission}")
 
         # Update total emission
-        total_value = redis.hget("total", carbon_computer.airspace_name)
-        total_emission = (
-            float(total_value.decode()) if total_value else 0.0
-        ) + new_emission
+        total_emission = db.get_total_carbon(carbon_computer.airspace_name) + new_emission
         print(f"Total emission in {carbon_computer.airspace_name}: {total_emission}")
-        redis.hset("total", carbon_computer.airspace_name, total_emission)
+        db.set_total_carbon(carbon_computer.airspace_name, total_emission)
 
 
 if __name__ == "__main__":
