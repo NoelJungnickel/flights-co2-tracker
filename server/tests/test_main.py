@@ -49,13 +49,13 @@ class TestMain:
         "berlin": "berlin",
         "paris": "paris",
         "london": "london",
-        "madrid": "madrid"
+        "madrid": "madrid",
     }
     passwords = {
         "berlin": "bpass",
         "paris": "ppass",
         "london": "lpass",
-        "madrid": "mpass"
+        "madrid": "mpass",
     }
 
     # number of running threads should be:
@@ -91,13 +91,12 @@ class TestMain:
 
     @typing.no_type_check
     @patch("main.update_total_co2_emission_job", wraps=mock_update_total_co2_emission_job)
-    def test_create_correct_workers(
-        self, mock_update_total_co2_emission_job
-    ) -> None:
+    def test_create_correct_workers(self, mock_update_total_co2_emission_job) -> None:
         """Checks whether it creates correct worker threads.
 
         One worker thread for every airspace/city
         """
+
         def run_jobs():
             while 1:
                 try:
@@ -106,7 +105,6 @@ class TestMain:
                     time.sleep(1)
                 except KeyboardInterrupt:
                     break
-                
 
         bounding_boxes = self.bounding_boxes
         worker_threads = create_carbon_computer_workers(
@@ -114,7 +112,7 @@ class TestMain:
         )
         for worker_thread in worker_threads:
             worker_thread.start()
-        
+
         schedule.run_all()
         # run pending jobs in a separate thread
         job_runner_thread = threading.Thread(name="job_runner", target=run_jobs)
@@ -127,15 +125,21 @@ class TestMain:
         # a job should be created for every airspace
         for job in schedule.get_jobs():
             create_update_total_co2_emission_job = job.job_func.args[0]
-            create_update_total_co2_emission_job_args = create_update_total_co2_emission_job.__defaults__[0]
+            create_update_total_co2_emission_job_args = (
+                create_update_total_co2_emission_job.__defaults__[0]
+            )
             carbon_computer = create_update_total_co2_emission_job_args[2]
             airspace_names.append(carbon_computer.airspace_name)
-        
+
         for worker_thread in worker_threads:
             # raise an exception to worker thread to stop it
             ctype_async_raise(worker_thread.ident, KeyboardInterrupt)
         ctype_async_raise(job_runner_thread.ident, KeyboardInterrupt)
 
-        assert len(worker_threads) == len(bounding_boxes), "Number of worker threads created should equal to number of airspaces observed"
-        assert set(airspace_names) == set(bounding_boxes.keys()), "Incorrect carbon computers created for airspaces observed"
-    
+        assert len(worker_threads) == len(bounding_boxes), (
+            "Number of worker threads created should equal "
+            "to number of airspaces observed"
+        )
+        assert set(airspace_names) == set(
+            bounding_boxes.keys()
+        ), "Incorrect carbon computers created for airspaces observed"

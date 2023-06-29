@@ -103,9 +103,29 @@ def run_fastapi() -> None:
     app = FastAPIWithRedis(API_HOST, API_PORT, REDIS_HOST, REDIS_PORT)
     uvicorn.run(app.app, host=API_HOST, port=API_PORT)
 
-def create_update_total_co2_emission_job(username, password, carbon_computer):
+
+def create_update_total_co2_emission_job(
+    username: str, password: str, carbon_computer: CarbonComputation
+) -> Callable:
+    """Creates a closure for the update_total_co2_emission_job function.
+
+    This function takes a `username`, `password`, and `carbon_computer` as arguments
+    and returns a closure that encapsulates these arguments. The closure, when invoked,
+    calls the `update_total_co2_emission_job` function with the stored arguments.
+
+    Args:
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+        carbon_computer (CarbonComputation): Class instance to handle the computation
+            of carbon emission in specific airspace.
+
+    Returns:
+        function (Callable): A lambda function that will call the
+            update_total_co2_emission_job function with the stored arguments.
+    """
     arguments = (username, password, carbon_computer)
     return lambda args=arguments: update_total_co2_emission_job(*args)
+
 
 def create_carbon_computer_workers(
     bounding_boxes: dict[str, Tuple[float, float, float, float]],
@@ -157,7 +177,9 @@ def create_carbon_computer_workers(
             username_not_none: str = username
             password_not_none: str = password
             worker_thread = Worker()
-            carbon_computer_job = create_update_total_co2_emission_job(username_not_none, password_not_none, carbon_computer)
+            carbon_computer_job = create_update_total_co2_emission_job(
+                username_not_none, password_not_none, carbon_computer
+            )
             schedule_co2_tracking(
                 worker_thread,
                 carbon_computer_job,
@@ -188,7 +210,7 @@ def update_total_co2_emission_job(
             of carbon emission in specific airspace.
     """
     response = get_states(username, password, carbon_computer.bounding_box)
-    
+
     # Compute new emission (response["states"] can be null)
     if response is not None and response["states"] is not None:
         new_emission = carbon_computer.get_co2_emission(
