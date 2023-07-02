@@ -73,7 +73,9 @@ class TestMain:
         for worker_thread in worker_threads:
             worker_thread.start()
 
-        schedule.run_all()
+        # start the first carbon caclulation job now instead of waiting 1 minute
+        for job in schedule.get_jobs("calculate-carbon"):
+            job.run()
 
         count = 0
         while True:
@@ -113,7 +115,10 @@ class TestMain:
         for worker_thread in worker_threads:
             worker_thread.start()
 
-        schedule.run_all()
+        # start the first carbon caclulation job now instead of waiting 1 minute
+        for job in schedule.get_jobs("calculate-carbon"):
+            job.run()
+
         # run pending jobs in a separate thread
         job_runner_thread = threading.Thread(name="job_runner", target=run_jobs)
         job_runner_thread.start()
@@ -123,7 +128,7 @@ class TestMain:
 
         # get the carbon computer and its airspace name in the job
         # a job should be created for every airspace
-        for job in schedule.get_jobs():
+        for job in schedule.get_jobs("calculate-carbon"):
             create_update_total_co2_emission_job = job.job_func.args[0]
             create_update_total_co2_emission_job_args = (
                 create_update_total_co2_emission_job.__defaults__[0]
