@@ -20,6 +20,7 @@ class CarbonComputation:
         self.airspace_name: str = airspace_name
         self.bounding_box: Tuple[float, float, float, float] = bounding_box
         self.aircrafts_in_airspace: Dict = {}
+        self.hourly_emission = 0.0
 
     def get_co2_emission(
         self, states: List[List[Any]], exit_time_threshold: int = 120

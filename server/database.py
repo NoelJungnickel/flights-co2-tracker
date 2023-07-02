@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from redis import Redis
+from typing import Tuple
+import json
 
 
 class DatabaseError(Exception):
@@ -40,6 +42,17 @@ class Database(ABC):
         """Sets total carbon emission value in airspace."""
         pass
 
+    @abstractmethod
+    def store_hourly_carbon(self, airspace: str, value: Tuple[int, float]) -> None:
+        """Stores the hourly carbon emission value in an airspace.
+
+        Args:
+            airspace (str): Name of the observed airspace.
+            value (Tuple[int, float]): Tuple of time in seconds since epoch
+                and carbon emission value.
+        """
+        pass
+
 
 class RedisDatabase(Database):
     """Implementation of database functions with a redis Database."""
@@ -67,3 +80,16 @@ class RedisDatabase(Database):
     def set_total_carbon(self, airspace: str, value: float) -> None:
         """Sets total carbon emission value in airspace."""
         self.redis.hset("total", airspace, value)
+
+    def store_hourly_carbon(self, airspace: str, value: Tuple[int, float]) -> None:
+        """Stores the hourly carbon emission value in an airspace."""
+        record = {"time": value[0], "co2": value[1]}
+        hourly_carbon_records_bytes = self.redis.hget("hourly", airspace)
+        if hourly_carbon_records_bytes is None:
+            self.redis.hset("hourly", airspace, json.dumps([record]))
+            return
+
+        hourly_carbon_records = json.loads(hourly_carbon_records_bytes.decode())
+        hourly_carbon_records.append(record)
+        print(f"Hourly Carbon - {airspace}: {hourly_carbon_records}")
+        self.redis.hset("hourly", airspace, json.dumps(hourly_carbon_records))
