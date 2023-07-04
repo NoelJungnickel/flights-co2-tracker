@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from redis import Redis
 from typing import Tuple, Dict
 from datetime import datetime
-import json
 
 
 class DatabaseError(Exception):
@@ -39,7 +38,7 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def set_server_startup_time(self, unixtime: float) -> None:
+    def set_server_startup_time(self, startup_time: datetime) -> None:
         """Sets startup time of the server as POSIX timestamp."""
         pass
 
@@ -64,16 +63,16 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def store_hourly_carbon(self, airspace: str, value: Tuple[int, float]) -> None:
-        """Stores the hourly carbon emission value in an airspace.
-
-        Args:
-            airspace (str): Name of the observed airspace.
-            value (Tuple[int, float]): Tuple of time in seconds since epoch
-                and carbon emission value.
-        """
+    def get_carbon_sequence(self, airspace: str, begin: int, end: int) -> None:
+        """Get sequence of carbon values in airspace between begin and end."""
         pass
 
+    @abstractmethod
+    def set_carbon_timestamp(
+        self, airspace: str, timestamp: datetime, value: float
+    ) -> None:
+        """Stores the carbon emission value in an airspace at specific timestamp."""
+        pass
 
 class RedisDatabase(Database):
     """Implementation of database functions with a redis Database."""
@@ -127,15 +126,13 @@ class RedisDatabase(Database):
         """Sets total carbon emission value in airspace."""
         self.redis.hset("total", airspace, value)
 
-    def store_hourly_carbon(self, airspace: str, value: Tuple[int, float]) -> None:
-        """Stores the hourly carbon emission value in an airspace."""
-        record = {"time": value[0], "co2": value[1]}
-        hourly_carbon_records_bytes = self.redis.hget("hourly", airspace)
-        if hourly_carbon_records_bytes is None:
-            self.redis.hset("hourly", airspace, json.dumps([record]))
-            return
+    def get_carbon_sequence(self, airspace: str, begin: int, end: int) -> None:
+        """Get sequence of carbon values in airspace between begin and end."""
+        data = self.redis.zrangebyscore(airspace, begin, end, withscores=True)
+        return {int(timestamp): float(value) for timestamp, value in data}
 
-        hourly_carbon_records = json.loads(hourly_carbon_records_bytes.decode())
-        hourly_carbon_records.append(record)
-        print(f"Hourly Carbon - {airspace}: {hourly_carbon_records}")
-        self.redis.hset("hourly", airspace, json.dumps(hourly_carbon_records))
+    def set_carbon_timestamp(
+        self, airspace: str, time: datetime, value: float
+    ) -> None:
+        """Stores the carbon emission value in an airspace at specific timestamp."""
+        self.redis.zadd(airspace, {int(time.timestamp()): value})

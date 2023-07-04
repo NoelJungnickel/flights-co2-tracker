@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
+from datetime import datetime
 
 from database import Database
 
@@ -30,7 +31,6 @@ class FastAPIWithDatabase:
         @self.app.get("/api/serverstart", response_model=ServerStartModel)
         async def get_server_startup_time() -> ServerStartModel:
             """Return total carbon emmision of given city from database."""
-            print("j")
             return ServerStartModel(timestamp=self.db.get_server_startup_time())
 
         class AirspaceModel(BaseModel):
@@ -50,4 +50,22 @@ class FastAPIWithDatabase:
             """Return total carbon emmision of given city from database."""
             return TotalCarbonModel(
                 airspace_name=airspace, total=self.db.get_total_carbon(airspace)
+            )
+
+        class CarbonSequenceModel(BaseModel):
+            airspace_name: str
+            data: Dict[int, float]
+
+        @self.app.get("/api/{airspace}/data", response_model=CarbonSequenceModel)
+        async def get_carbon_sequence(
+            airspace: str, begin: Optional[int] = None, end: Optional[int] = None
+        ) -> CarbonSequenceModel:
+            """Return total carbon emmision of given city from database."""
+            if begin is None:
+                begin = 0
+            if end is None:
+                end = int(datetime.now().timestamp())
+            return CarbonSequenceModel(
+                airspace_name=airspace,
+                data=self.db.get_carbon_sequence(airspace, begin, end),
             )

@@ -227,9 +227,6 @@ def update_total_co2_emission_job(
         )
         print(f"New emission in {carbon_computer.airspace_name}: {new_emission}")
 
-        # Add to hourly emission
-        carbon_computer.hourly_emission += new_emission
-
         # Update total emission
         total_emission = db.get_total_carbon(carbon_computer.airspace_name) + new_emission
         print(f"Total emission in {carbon_computer.airspace_name}: {total_emission}")
@@ -243,11 +240,8 @@ def store_hourly_co2_emission_job(carbon_computer: CarbonComputation) -> None:
         carbon_computer (CarbonComputation): Class instance to handle the computation
             of carbon emission in specific airspace.
     """
-    epoch_time = int(time.time())
-    db.store_hourly_carbon(
-        carbon_computer.airspace_name, (epoch_time, carbon_computer.hourly_emission)
-    )
-    carbon_computer.hourly_emission = 0
+    total_value = db.get_total_carbon(carbon_computer.airspace_name)
+    db.set_carbon_timestamp(carbon_computer.airspace_name, datetime.now(), total_value)
 
 
 if __name__ == "__main__":
