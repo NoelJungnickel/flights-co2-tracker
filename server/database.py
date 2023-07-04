@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from redis import Redis
-from typing import Tuple
+from typing import Tuple, Dict
+from datetime import datetime
 import json
 
 
@@ -30,6 +31,26 @@ class Database(ABC):
         Raises:
             DatabaseError, if connection cannot be made.
         """
+        pass
+
+    @abstractmethod
+    def get_server_startup_time(self) -> int:
+        """Returns startup time of the server as POSIX timestamp."""
+        pass
+
+    @abstractmethod
+    def set_server_startup_time(self, unixtime: float) -> None:
+        """Sets startup time of the server as POSIX timestamp."""
+        pass
+
+    @abstractmethod
+    def get_airspaces(self) -> Dict[str, Tuple]:
+        """Returns Dictionary of airspaces in the form name: bounding_box."""
+        pass
+
+    @abstractmethod
+    def set_airspaces(self, airspaces: Dict[str, Tuple]) -> None:
+        """Saves airspace-dictionary in the form name: bounding_box."""
         pass
 
     @abstractmethod
@@ -65,12 +86,37 @@ class RedisDatabase(Database):
         """Check whether redis is running.
 
         Raises:
-            DatabaseError, if connection cannot be made.
+            DatabaseError, if redis is not reachable.
         """
         try:
             self.redis.info()
         except Exception:
             raise DatabaseError("Redis Database not running.")
+
+    def get_server_startup_time(self) -> int:
+        """Returns startup time of the server as POSIX timestamp from Redis."""
+        timestamp = self.redis.get("startup_time")
+        return int(timestamp.decode()) if timestamp else 0
+
+    def set_server_startup_time(self, startup_time: datetime) -> None:
+        """Sets startup time of the server as POSIX timestamp from Redis."""
+        self.redis.set("startup_time", int(startup_time.timestamp()))
+
+    def get_airspaces(self) -> Dict[str, Tuple]:
+        """Returns a dictionary of airspaces in the form name: bounding_box from Redis."""
+        airspaces = self.redis.hgetall("airspaces")
+        return {
+            key.decode("utf-8"): tuple(map(float, value.decode("utf-8").split(",")))
+            for key, value in airspaces.items()
+        }
+
+    def set_airspaces(self, airspaces: Dict[str, Tuple]) -> None:
+        """Saves airspace-dictionary in the form name: bounding_box from Redis."""
+        airspaces_str = {
+            airspace_name: ",".join(str(coord) for coord in bounding_box)
+            for airspace_name, bounding_box in airspaces.items()
+        }
+        self.redis.hmset("airspaces", airspaces_str)
 
     def get_total_carbon(self, airspace: str) -> float:
         """Return total carbon emmision of given airspace from redis."""

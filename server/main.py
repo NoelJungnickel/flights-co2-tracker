@@ -3,6 +3,7 @@ import time
 import configparser
 import uvicorn
 from threading import Thread
+from datetime import datetime
 from multiprocessing import Process
 from typing import Callable, Tuple, Optional, List
 from queue import Queue
@@ -74,7 +75,12 @@ def main() -> None:
         "london": (51.344500, -0.388934, 51.643400, 0.194758),
         "madrid": (40.312817, -3.831991, 40.561061, -3.524374),
     }
+    db.set_airspaces(bounding_boxes)
 
+    # Save current time as server startup time
+    db.set_server_startup_time(datetime.now())
+
+    # Initilize server carbon computations
     try:
         worker_threads = create_carbon_computer_workers(
             bounding_boxes, usernames, passwords, "minutes", 1
