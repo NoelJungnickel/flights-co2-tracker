@@ -3,6 +3,8 @@ from redis import Redis
 from typing import Tuple
 import json
 
+from celeb_data_computation import Celeb
+
 
 class DatabaseError(Exception):
     """Class providing a basic db error.
@@ -53,6 +55,29 @@ class Database(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_celeb_carbon(self, celeb: Celeb) -> float:
+        """Returns carbon emission of given celebrity for the current month."""
+        pass
+
+    @abstractmethod
+    def increment_celeb_carbon(self, celeb: Celeb, amount: float) -> float:
+        """Sets carbon emission of given celebrity.
+
+        Args:
+            celeb (Celeb): Celebrity object to update
+            amount (float): Amount to increment carbon emission of given celeb
+
+        Returns:
+            float: Amount of carbon emission after incrementing
+        """
+        pass
+
+    @abstractmethod
+    def clear_celeb_carbon(self, celeb: Celeb) -> bool:
+        """Clears carbon emission of given celebrity and returns boolean indicating success."""
+        pass
+
 
 class RedisDatabase(Database):
     """Implementation of database functions with a redis Database."""
@@ -93,3 +118,17 @@ class RedisDatabase(Database):
         hourly_carbon_records.append(record)
         print(f"Hourly Carbon - {airspace}: {hourly_carbon_records}")
         self.redis.hset("hourly", airspace, json.dumps(hourly_carbon_records))
+
+    def get_celeb_carbon(self, celeb: Celeb) -> float:
+        celeb_carbon = self.redis.hget(celeb["name"], "emissionsThisMonth")
+        return float(celeb_carbon.decode()) if celeb_carbon else 0.0
+
+    def increment_celeb_carbon(self, celeb: Celeb, amount: float) -> float:
+        new_amount = self.redis.hincrbyfloat(
+            celeb["name"], "emissionsThisMonth", amount
+        )
+        return new_amount
+
+    def clear_celeb_carbon(self, celeb: Celeb) -> bool:
+        result = self.redis.hset(celeb["name"], "emissionsThisMonth", 0.0)
+        return bool(result)
