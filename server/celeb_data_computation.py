@@ -1,5 +1,5 @@
 from typing import TypedDict
-from opensky_network import get_flights_max_24h
+from opensky_network import get_flights_of_aircraft_max_24h
 import datetime
 
 
@@ -16,7 +16,7 @@ def update_all_celebs():
 
     for celeb in celeb_list:
         for icao in celeb["icaos"]:
-            flightResponses = get_flights_max_24h(
+            flightResponses = get_flights_of_aircraft_max_24h(
                 str(icao),
                 first_second_yesterday,
                 last_second_yesterday,
@@ -27,7 +27,9 @@ def update_all_celebs():
             if flightResponses is not None:
                 print(f"{flightResponses=}")
                 for flightResponse in flightResponses:
-                    emis = flightResponse["lastSeen"] - flightResponse["firstSeen"]
+                    emis = calculate_co2_emission(
+                        flightResponse["lastSeen"] - flightResponse["firstSeen"]
+                    )
                     print(f"emis: {emis}kg")
             else:
                 print("no data")
@@ -51,7 +53,7 @@ def get_first_and_last_second_yesterday() -> tuple[int, int]:
 
 
 def calculate_co2_emission(
-    self, duration: float, fuel_consumption_rate: float = 378.54
+    duration: float, fuel_consumption_rate: float = 378.54
 ) -> float:
     """Calculates the amount of CO2 emission of a flight.
 

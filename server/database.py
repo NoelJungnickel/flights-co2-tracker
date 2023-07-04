@@ -45,7 +45,11 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def store_hourly_carbon(self, airspace: str, value: Tuple[int, float]) -> None:
+    def store_hourly_carbon(
+        self,
+        airspace: str,
+        value: Tuple[int, float],
+    ) -> None:
         """Stores the hourly carbon emission value in an airspace.
 
         Args:
@@ -106,18 +110,33 @@ class RedisDatabase(Database):
         """Sets total carbon emission value in airspace."""
         self.redis.hset("total", airspace, value)
 
-    def store_hourly_carbon(self, airspace: str, value: Tuple[int, float]) -> None:
+    def store_hourly_carbon(
+        self,
+        airspace: str,
+        value: Tuple[int, float],
+    ) -> None:
         """Stores the hourly carbon emission value in an airspace."""
-        record = {"time": value[0], "co2": value[1]}
+        record = {
+            "time": value[0],
+            "co2": value[1],
+        }
         hourly_carbon_records_bytes = self.redis.hget("hourly", airspace)
         if hourly_carbon_records_bytes is None:
-            self.redis.hset("hourly", airspace, json.dumps([record]))
+            self.redis.hset(
+                "hourly",
+                airspace,
+                json.dumps([record]),
+            )
             return
 
         hourly_carbon_records = json.loads(hourly_carbon_records_bytes.decode())
         hourly_carbon_records.append(record)
         print(f"Hourly Carbon - {airspace}: {hourly_carbon_records}")
-        self.redis.hset("hourly", airspace, json.dumps(hourly_carbon_records))
+        self.redis.hset(
+            "hourly",
+            airspace,
+            json.dumps(hourly_carbon_records),
+        )
 
     def get_celeb_carbon(self, celeb: Celeb) -> float:
         celeb_carbon = self.redis.hget(celeb["name"], "emissionsThisMonth")
@@ -125,10 +144,16 @@ class RedisDatabase(Database):
 
     def increment_celeb_carbon(self, celeb: Celeb, amount: float) -> float:
         new_amount = self.redis.hincrbyfloat(
-            celeb["name"], "emissionsThisMonth", amount
+            celeb["name"],
+            "emissionsThisMonth",
+            amount,
         )
         return new_amount
 
     def clear_celeb_carbon(self, celeb: Celeb) -> bool:
-        result = self.redis.hset(celeb["name"], "emissionsThisMonth", 0.0)
+        result = self.redis.hset(
+            celeb["name"],
+            "emissionsThisMonth",
+            0.0,
+        )
         return bool(result)
