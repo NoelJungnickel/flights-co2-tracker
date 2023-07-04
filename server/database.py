@@ -48,7 +48,9 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def set_airspaces(self, airspaces: Dict[str, Tuple]) -> None:
+    def set_airspaces(
+        self, airspaces: Dict[str, Tuple[float, float, float, float]]
+    ) -> None:
         """Saves airspace-dictionary in the form name: bounding_box."""
         pass
 
@@ -63,7 +65,9 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def get_carbon_sequence(self, airspace: str, begin: int, end: int) -> None:
+    def get_carbon_sequence(
+        self, airspace: str, begin: int, end: int
+    ) -> Dict[int, float]:
         """Get sequence of carbon values in airspace between begin and end."""
         pass
 
@@ -73,6 +77,7 @@ class Database(ABC):
     ) -> None:
         """Stores the carbon emission value in an airspace at specific timestamp."""
         pass
+
 
 class RedisDatabase(Database):
     """Implementation of database functions with a redis Database."""
@@ -109,13 +114,14 @@ class RedisDatabase(Database):
             for key, value in airspaces.items()
         }
 
-    def set_airspaces(self, airspaces: Dict[str, Tuple]) -> None:
+    def set_airspaces(
+        self, airspaces: Dict[str, Tuple[float, float, float, float]]
+    ) -> None:
         """Saves airspace-dictionary in the form name: bounding_box from Redis."""
-        airspaces_str = {
+        self.redis.hmset("airspaces", {
             airspace_name: ",".join(str(coord) for coord in bounding_box)
             for airspace_name, bounding_box in airspaces.items()
-        }
-        self.redis.hmset("airspaces", airspaces_str)
+        })
 
     def get_total_carbon(self, airspace: str) -> float:
         """Return total carbon emmision of given airspace from redis."""
@@ -126,13 +132,13 @@ class RedisDatabase(Database):
         """Sets total carbon emission value in airspace."""
         self.redis.hset("total", airspace, value)
 
-    def get_carbon_sequence(self, airspace: str, begin: int, end: int) -> None:
+    def get_carbon_sequence(
+        self, airspace: str, begin: int, end: int
+    ) -> Dict[int, float]:
         """Get sequence of carbon values in airspace between begin and end."""
         data = self.redis.zrangebyscore(airspace, begin, end, withscores=True)
         return {int(timestamp): float(value) for timestamp, value in data}
 
-    def set_carbon_timestamp(
-        self, airspace: str, time: datetime, value: float
-    ) -> None:
+    def set_carbon_timestamp(self, airspace: str, dt: datetime, value: float) -> None:
         """Stores the carbon emission value in an airspace at specific timestamp."""
-        self.redis.zadd(airspace, {int(time.timestamp()): value})
+        self.redis.zadd(airspace, {str(dt.timestamp()): value})
