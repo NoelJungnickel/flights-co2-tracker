@@ -160,7 +160,7 @@ def create_carbon_computer_workers(
     """
 
     def schedule_co2_tracking(
-        worker: Worker, job: Callable, metric_time: str, interval: int
+        worker: Worker, job_func: Callable, metric_time: str, interval: int
     ) -> None:
         time_mapping = {
             "seconds": schedule.every(interval).seconds,
@@ -172,7 +172,7 @@ def create_carbon_computer_workers(
 
         schedule_func = time_mapping.get(metric_time)
         if schedule_func:
-            schedule_func.do(worker.jobqueue.put, job).tag("calculate-carbon")
+            schedule_func.do(worker.jobqueue.put, job_func).tag("calculate-carbon")
         else:
             print("Invalid metric_time")
 
@@ -185,12 +185,12 @@ def create_carbon_computer_workers(
             username_not_none: str = username
             password_not_none: str = password
             worker_thread = Worker()
-            carbon_computer_job = create_update_total_co2_emission_job(
+            carbon_computer_job_func = create_update_total_co2_emission_job(
                 username_not_none, password_not_none, carbon_computer
             )
             schedule_co2_tracking(
                 worker_thread,
-                carbon_computer_job,
+                carbon_computer_job_func,
                 metric_time,
                 interval,
             )
