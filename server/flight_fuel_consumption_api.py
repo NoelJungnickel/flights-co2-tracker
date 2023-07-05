@@ -20,14 +20,12 @@ def get_flight_fuel_consumption(
         f"https://despouy.ca/flight-fuel-api/q/?aircraft={','.join(icao24_list)}"
         f"&distance={','.join(str(x) for x in distance_list)}"
     )
-    print(url)
     try:
         response = requests.get(url, timeout=(10))
 
         if response.ok:
             return response.json()
         else:
-            print(response.text)
             return None
     except requests.exceptions.Timeout:
         print("The request timed out")
