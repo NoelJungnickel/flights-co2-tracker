@@ -149,7 +149,7 @@ def create_carbon_computer_workers(
                 job_func=update_total_co2_emission_job,
                 time_unit="minutes",
                 interval=1,
-                tags=["carbon_computation"],
+                tags=["carbon_computation", carbon_computer.airspace_name],
                 username=username,
                 password=password,
                 carbon_computer=carbon_computer,
@@ -161,7 +161,7 @@ def create_carbon_computer_workers(
                 job_func=store_co2_emission_job,
                 time_unit="hours",
                 interval=1,
-                tags=["store_emission"],
+                tags=["store_emission", carbon_computer.airspace_name],
                 carbon_computer=carbon_computer,
             )
             worker_thread.daemon = True
