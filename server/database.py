@@ -118,10 +118,13 @@ class RedisDatabase(Database):
         self, airspaces: Dict[str, Tuple[float, float, float, float]]
     ) -> None:
         """Saves airspace-dictionary in the form name: bounding_box from Redis."""
-        self.redis.hmset("airspaces", {
-            airspace_name: ",".join(str(coord) for coord in bounding_box)
-            for airspace_name, bounding_box in airspaces.items()
-        })
+        self.redis.hmset(
+            "airspaces",
+            {
+                airspace_name: ",".join(str(coord) for coord in bounding_box)
+                for airspace_name, bounding_box in airspaces.items()
+            },
+        )
 
     def get_total_carbon(self, airspace: str) -> float:
         """Return total carbon emmision of given airspace from redis."""

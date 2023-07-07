@@ -110,7 +110,10 @@ class CarbonComputation:
 
         # create icao24_distance_list
         icao24_distance_list = [
-            (icao24, geopy_distance.Distance(kilometers=state["curr_distance"]).nautical)
+            (
+                icao24,
+                geopy_distance.Distance(kilometers=state["curr_distance"]).nautical,
+            )
             for icao24, state in self.aircrafts_in_airspace.items()
             if state.get("curr_distance")
         ]
