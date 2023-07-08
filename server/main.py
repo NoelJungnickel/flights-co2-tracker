@@ -9,10 +9,10 @@ from typing import Callable, Tuple, Optional, List, Hashable, Any
 from queue import Queue
 from argparse import ArgumentParser
 
-from lib.opensky_network import get_states
-from lib.carbon_computation import CarbonComputation
-from api.server_api import FastAPIWithDatabase
-from database.database import DatabaseError, RedisDatabase
+from opensky_network import get_states
+from carbon_computation import CarbonComputation
+from server_api import FastAPIWithDatabase
+from database import DatabaseError, RedisDatabase
 
 API_HOST = "127.0.0.1"
 API_PORT = 8000

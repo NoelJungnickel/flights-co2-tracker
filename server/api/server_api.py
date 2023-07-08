@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Tuple, Dict, Optional
 from datetime import datetime
 
-from database.database import Database, RedisDatabase, DatabaseError
+from database import Database, RedisDatabase, DatabaseError
 
 
 class FastAPIWithDatabase:
