@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  redis:
+    build:
+      context: .
+      dockerfile: Dockerfile.redis
+    ports:
+      - 6379:6379
+
+  main:
+    build:
+      context: .
+      dockerfile: Dockerfile.main
+    depends_on:
+      - redis
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    depends_on:
+      - redis
+    ports:
+      - 8000:8000
+

@@ -1,5 +1,6 @@
-from abc import ABC, abstractmethod
 from redis import Redis
+
+from abc import ABC, abstractmethod
 from typing import Tuple, Dict
 from datetime import datetime
 

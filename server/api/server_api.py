@@ -1,9 +1,11 @@
+import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
+
 from typing import Tuple, Dict, Optional
 from datetime import datetime
 
-from database import Database
+from database.database import Database, RedisDatabase, DatabaseError
 
 
 class FastAPIWithDatabase:
@@ -69,3 +71,29 @@ class FastAPIWithDatabase:
                 airspace_name=airspace,
                 data=self.db.get_carbon_sequence(airspace, begin, end),
             )
+
+    def run(self) -> None:
+        """Run the FastAPI application with given host and port."""
+        uvicorn.run(self.app, host=self.host, port=self.port)
+
+
+API_HOST = "127.0.0.1"
+API_PORT = 8000
+REDIS_HOST = "127.0.0.1"
+REDIS_PORT = 6379
+
+def main() -> None:
+    """Create and start server-side API."""
+    db = RedisDatabase(REDIS_HOST, REDIS_PORT)
+
+    try:
+        db.is_running()
+    except DatabaseError:
+        raise RuntimeError("Database connection failed.")
+
+    api = FastAPIWithDatabase(db, API_HOST, API_PORT)
+    api.run()
+
+
+if __name__ == "__main__":
+    main()
