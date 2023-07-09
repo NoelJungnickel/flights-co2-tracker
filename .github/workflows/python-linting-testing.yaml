@@ -24,8 +24,11 @@ jobs:
         python-version: '3.11'
 
     # installs dependencies from requirements.txt
-    - name: Install dependencies
+    - name: Install main dependencies
       run: pip install -r requirements.txt
+
+    - name: Install api dependencies
+      run: pip install -r api/requirements.txt
 
     # run ruff on Python files
     - name: Run linter
