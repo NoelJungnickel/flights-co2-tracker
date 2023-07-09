@@ -4,21 +4,21 @@ services:
   redis:
     build:
       context: .
-      dockerfile: Dockerfile.redis
+      dockerfile: ./dockerfiles/Dockerfile.redis
     ports:
       - 6379:6379
 
   main:
     build:
       context: .
-      dockerfile: Dockerfile.main
+      dockerfile: ./dockerfiles/Dockerfile.main
     depends_on:
       - redis
 
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: ./dockerfiles/Dockerfile.api
     depends_on:
       - redis
     ports:

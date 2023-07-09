@@ -1,22 +1,17 @@
 import schedule
 import time
 import configparser
-import uvicorn
 from threading import Thread
 from datetime import datetime
-from multiprocessing import Process
 from typing import Callable, Tuple, Optional, List, Hashable, Any
 from queue import Queue
 from argparse import ArgumentParser
 
 from opensky_network import get_states
 from carbon_computation import CarbonComputation
-from server_api import FastAPIWithDatabase
 from database import DatabaseError, RedisDatabase
 
-API_HOST = "127.0.0.1"
-API_PORT = 8000
-REDIS_HOST = "127.0.0.1"
+REDIS_HOST = "redis"
 REDIS_PORT = 6379
 
 db = RedisDatabase(host=REDIS_HOST, port=REDIS_PORT)
@@ -83,38 +78,21 @@ def main() -> None:
     # Save current time as server startup time
     db.set_server_startup_time(datetime.now())
 
-    # Initilize process for server api
-    api_process = Process(target=run_fastapi)
-
     # Initialize worker threads for computation
     worker_threads = create_carbon_computer_workers(bounding_boxes, usernames, passwords)
 
-    # Initilize server carbon computations
-    try:
-        # Start the server api in a seperate process
-        api_process.start()
+    # Start worker threads
+    for worker_thread in worker_threads:
+        worker_thread.start()
 
-        # Start worker threads
-        for worker_thread in worker_threads:
-            worker_thread.start()
+    # Start the first carbon caclulation job now instead of waiting 1 minute
+    for job in schedule.get_jobs("carbon_computation"):
+        job.run()
 
-        # Start the first carbon caclulation job now instead of waiting 1 minute
-        for job in schedule.get_jobs("carbon_computation"):
-            job.run()
-
-        # call opensky api every (1 + calculation time) minute(s)
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
-    finally:
-        api_process.terminate()
-        api_process.join()
-
-
-def run_fastapi() -> None:
-    """Run the FastAPI application in a separate process."""
-    app = FastAPIWithDatabase(db, host=API_HOST, port=API_PORT)
-    uvicorn.run(app.app, host=API_HOST, port=API_PORT)
+    # call opensky api every (1 + calculation time) minute(s)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 
 def create_carbon_computer_workers(
@@ -167,7 +145,7 @@ def create_carbon_computer_workers(
             worker_thread.daemon = True
             worker_threads.append(worker_thread)
         else:
-            print(f"Missing credentials for {airspace}. Skipping...")
+            print(f"Missing credentials for {airspace}. Skipping...", flush=True)
 
     return worker_threads
 
@@ -206,7 +184,7 @@ def schedule_job_function(
     if schedule_func:
         schedule_func.do(worker.jobqueue.put, (job_func, args, kwargs)).tag(*tags)
     else:
-        print("Invalid time unit")
+        print("Invalid time unit", flush=True)
 
 
 def update_total_co2_emission_job(
@@ -229,11 +207,16 @@ def update_total_co2_emission_job(
         new_emission = carbon_computer.get_co2_emission(
             response["states"], response["time"]
         )
-        print(f"New emission in {carbon_computer.airspace_name}: {new_emission}")
+        print(
+            f"New emission in {carbon_computer.airspace_name}: {new_emission}", flush=True
+        )
 
         # Update total emission
         total_emission = db.get_total_carbon(carbon_computer.airspace_name) + new_emission
-        print(f"Total emission in {carbon_computer.airspace_name}: {total_emission}")
+        print(
+            f"Total emission in {carbon_computer.airspace_name}: {total_emission}",
+            flush=True,
+        )
         db.set_total_carbon(carbon_computer.airspace_name, total_emission)
 
 
@@ -246,7 +229,10 @@ def store_co2_emission_job(carbon_computer: CarbonComputation) -> None:
     """
     total_value = db.get_total_carbon(carbon_computer.airspace_name)
     db.set_carbon_timestamp(carbon_computer.airspace_name, datetime.now(), total_value)
-    print(f"Stored total emission in {carbon_computer.airspace_name}: {total_value}")
+    print(
+        f"Stored total emission in {carbon_computer.airspace_name}: {total_value}",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

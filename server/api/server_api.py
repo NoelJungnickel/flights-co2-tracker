@@ -17,7 +17,7 @@ class FastAPIWithDatabase:
         port (int): Port for the FastAPI application. Default: 8000.
     """
 
-    def __init__(self, db: Database, host: str = "127.0.0.1", port: int = 8000) -> None:
+    def __init__(self, db: Database, host: str = "0.0.0.0", port: int = 8000) -> None:
         self.app = FastAPI()
         self.host = host
         self.port = port
@@ -77,10 +77,11 @@ class FastAPIWithDatabase:
         uvicorn.run(self.app, host=self.host, port=self.port)
 
 
-API_HOST = "127.0.0.1"
+API_HOST = "0.0.0.0"
 API_PORT = 8000
-REDIS_HOST = "127.0.0.1"
+REDIS_HOST = "redis"
 REDIS_PORT = 6379
+
 
 def main() -> None:
     """Create and start server-side API."""
