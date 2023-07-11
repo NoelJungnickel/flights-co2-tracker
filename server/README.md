@@ -1,6 +1,14 @@
 # Flight Tracker Python Backend
 
 This directory contains the backend on the Flight-CO2-Tracker and is designed to be hosted in the cloud. The backend currently runs under `http://35.210.64.77:8000` in a GCP Virtual Machine.
+For retrieving flight data, we use the real-time data provided by the Opensky Network: `https://opensky-network.org`
+Detailed information about them can be found on their website and in the original OpenSky paper:
+```
+Matthias Schäfer, Martin Strohmeier, Vincent Lenders, Ivan Martinovic and Matthias Wilhelm.
+"Bringing Up OpenSky: A Large-scale ADS-B Sensor Network for Research".
+In Proceedings of the 13th IEEE/ACM International Symposium on Information Processing in Sensor Networks (IPSN), pages 83-94, April 2014.
+```
+For our carbon computation, we also rely on a Flight Fuel Consumption API, which can be further investigated via `https://despouy.ca/flight-fuel-api/`
 
 ## General Code Structure
 
