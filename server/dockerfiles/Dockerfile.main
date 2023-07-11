@@ -3,6 +3,6 @@ FROM python:3.11-slim
 WORKDIR /server
 COPY . .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python", "main.py", "--db_host", "redis", "--db_port", "6379"]

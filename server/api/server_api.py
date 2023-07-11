@@ -2,6 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from argparse import ArgumentParser
 from typing import Tuple, Dict, Optional
 from datetime import datetime
 
@@ -77,22 +78,32 @@ class FastAPIWithDatabase:
         uvicorn.run(self.app, host=self.host, port=self.port)
 
 
-API_HOST = "0.0.0.0"
-API_PORT = 8000
-REDIS_HOST = "redis"
-REDIS_PORT = 6379
+def argparser() -> ArgumentParser:
+    """Returns command line arguments parser."""
+    parser = ArgumentParser()
+
+    parser.add_argument("--api_host", type=str, default="127.0.0.1")
+
+    parser.add_argument("--api_port", type=int, default=8000)
+
+    parser.add_argument("--db_host", type=str, default="127.0.0.1")
+
+    parser.add_argument("--db_port", type=int, default=6379)
+
+    return parser
 
 
 def main() -> None:
     """Create and start server-side API."""
-    db = RedisDatabase(REDIS_HOST, REDIS_PORT)
+    args = argparser().parse_args()
+    db = RedisDatabase(args.db_host, args.db_port)
 
     try:
         db.is_running()
     except DatabaseError:
         raise RuntimeError("Database connection failed.")
 
-    api = FastAPIWithDatabase(db, API_HOST, API_PORT)
+    api = FastAPIWithDatabase(db, args.api_host, args.api_port)
     api.run()
 
 
