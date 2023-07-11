@@ -56,7 +56,7 @@ def main() -> None:
     # Read credentials from config file or json-string
     accounts = {}
     if os.path.isfile(args.accounts):
-        with open (args.accounts) as json_file:
+        with open(args.accounts) as json_file:
             accounts = json.load(json_file)
     else:
         accounts = json.loads(args.accounts)
