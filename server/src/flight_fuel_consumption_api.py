@@ -1,9 +1,6 @@
 import requests
 from typing import Optional, Tuple, Dict
 
-# https://despouy.ca/flight-fuel-api/
-
-
 def get_flight_fuel_consumption(
     icao24_distance_list: list[Tuple[str, float]]
 ) -> Optional[Dict]:
