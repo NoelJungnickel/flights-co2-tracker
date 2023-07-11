@@ -59,7 +59,7 @@ def main() -> None:
         with open (args.accounts) as json_file:
             accounts = json.load(json_file)
     else:
-        accounts = json.load(args.accounts)
+        accounts = json.loads(args.accounts)
 
     # Connect to Redis Database
     db = RedisDatabase(host=args.db_host, port=args.db_port)
@@ -119,7 +119,7 @@ def create_carbon_computer_workers(
     # Create one worker thread for each airspace if username and password were provided
     for airspace, bounding_box in bounding_boxes.items():
         if (
-            accounts[airspace]
+            accounts.get(airspace)
             and accounts[airspace].get("username")
             and accounts[airspace].get("password")
         ):

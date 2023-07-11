@@ -2,6 +2,7 @@ name: python-linting-testing
 
 on: 
   push:
+  workflow_call:
 
 jobs:
   linting-and-testing:
@@ -11,7 +12,7 @@ jobs:
     # set default working directory
     defaults:
         run:
-          working-directory: ./server
+          working-directory: ./server/src
 
     steps:
     # downloads the repository code to the runner's file system for workflow access
