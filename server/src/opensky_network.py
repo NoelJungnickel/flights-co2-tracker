@@ -24,9 +24,7 @@ def get_states(
     )
 
     try:
-        response = requests.get(
-            url, auth=HTTPBasicAuth(username, password), timeout=(10)
-        )
+        response = requests.get(url, auth=HTTPBasicAuth(username, password), timeout=(10))
 
         if response.ok:
             return response.json()

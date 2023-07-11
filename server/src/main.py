@@ -1,9 +1,10 @@
 import schedule
 import time
-import configparser
+import json
+import os
 from threading import Thread
 from datetime import datetime
-from typing import Callable, Tuple, Optional, List, Hashable, Any
+from typing import Callable, Tuple, List, Hashable, Any, Dict
 from queue import Queue
 from argparse import ArgumentParser
 
@@ -35,10 +36,10 @@ def argparser() -> ArgumentParser:
     parser = ArgumentParser()
 
     parser.add_argument(
-        "--config",
+        "--accounts",
         type=str,
-        help="Path to the configuration file with opensky account data",
-        default="config.ini",
+        help="Path to the configuration file with opensky account data or json string",
+        default="account_data.json",
     )
 
     parser.add_argument("--db_host", type=str, default="127.0.0.1")
@@ -52,17 +53,13 @@ def main() -> None:
     """Entry point of the application."""
     args = argparser().parse_args()
 
-    # Read credentials from config file
-    usernames = {}
-    passwords = {}
-
-    config = configparser.ConfigParser()
-    config.read(args.config)
-
-    for section in config.sections():
-        if "username" in config[section] and "password" in config[section]:
-            usernames[section] = config[section]["username"]
-            passwords[section] = config[section]["password"]
+    # Read credentials from config file or json-string
+    accounts = {}
+    if os.path.isfile(args.accounts):
+        with open (args.accounts) as json_file:
+            accounts = json.load(json_file)
+    else:
+        accounts = json.load(args.accounts)
 
     # Connect to Redis Database
     db = RedisDatabase(host=args.db_host, port=args.db_port)
@@ -84,9 +81,7 @@ def main() -> None:
     db.set_server_startup_time(datetime.now())
 
     # Initialize worker threads for computation
-    worker_threads = create_carbon_computer_workers(
-        db, bounding_boxes, usernames, passwords
-    )
+    worker_threads = create_carbon_computer_workers(db, bounding_boxes, accounts)
 
     # Start worker threads
     for worker_thread in worker_threads:
@@ -104,9 +99,8 @@ def main() -> None:
 
 def create_carbon_computer_workers(
     db: Database,
-    bounding_boxes: dict[str, Tuple[float, float, float, float]],
-    usernames: dict[str, str],
-    passwords: dict[str, str],
+    bounding_boxes: Dict[str, Tuple[float, float, float, float]],
+    accounts: Dict[str, Dict[str, str]],
 ) -> List[Worker]:
     """Creates worker threads and provide them with necessary jobs.
 
@@ -114,8 +108,8 @@ def create_carbon_computer_workers(
         db (Database): Database for carbon data storage.
         bounding_boxes (dict[str, Tuple]): A dictionary of bounding boxes of the
             watched airspace.
-        usernames (dict[str, str]): A dictionary of usernames for authentication.
-        passwords (dict[str, str]): A dictionary of passwords for authentication.
+        accounts (Dict[str, Dict[str, str]]): A dictionary of account information like
+            {AIRSPACE: {"username": USERNAME, "password": PASSWORD}, ...}
 
     Returns:
         List[Worker]: List of worker threads to be started.
@@ -124,9 +118,11 @@ def create_carbon_computer_workers(
 
     # Create one worker thread for each airspace if username and password were provided
     for airspace, bounding_box in bounding_boxes.items():
-        username: Optional[str] = usernames.get(airspace)
-        password: Optional[str] = passwords.get(airspace)
-        if username and password:
+        if (
+            accounts[airspace]
+            and accounts[airspace].get("username")
+            and accounts[airspace].get("password")
+        ):
             carbon_computer = CarbonComputation(airspace, bounding_box)
             worker_thread = Worker()
 
@@ -138,8 +134,8 @@ def create_carbon_computer_workers(
                 interval=1,
                 tags=["carbon_computation", carbon_computer.airspace_name],
                 db=db,
-                username=username,
-                password=password,
+                username=accounts[airspace].get("username"),
+                password=accounts[airspace].get("password"),
                 carbon_computer=carbon_computer,
             )
 
@@ -225,9 +221,7 @@ def update_total_co2_emission_job(
         )
 
         # Update total emission
-        total_emission = (
-            db.get_total_carbon(carbon_computer.airspace_name) + new_emission
-        )
+        total_emission = db.get_total_carbon(carbon_computer.airspace_name) + new_emission
         print(
             f"Total emission in {carbon_computer.airspace_name}: {total_emission}",
             flush=True,
