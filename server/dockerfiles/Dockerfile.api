@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY src/api/requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY src/database.py .
+COPY src/api/ .
+
+EXPOSE 8000
+
+ENTRYPOINT ["python", "server_api.py", "--api_host", "0.0.0.0", "--api_port", "8000", "--db_host", "redis", "--db_port", "6379"]

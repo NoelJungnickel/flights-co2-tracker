@@ -1,25 +1,16 @@
 import schedule
 import time
-import configparser
-import uvicorn
+import json
+import os
 from threading import Thread
 from datetime import datetime
-from multiprocessing import Process
-from typing import Callable, Tuple, Optional, List, Hashable, Any
+from typing import Callable, Tuple, List, Hashable, Any, Dict
 from queue import Queue
 from argparse import ArgumentParser
 
 from opensky_network import get_states
 from carbon_computation import CarbonComputation
-from server_api import FastAPIWithDatabase
-from database import DatabaseError, RedisDatabase
-
-API_HOST = "127.0.0.1"
-API_PORT = 8000
-REDIS_HOST = "127.0.0.1"
-REDIS_PORT = 6379
-
-db = RedisDatabase(host=REDIS_HOST, port=REDIS_PORT)
+from database import Database, DatabaseError, RedisDatabase
 
 
 class Worker(Thread):
@@ -40,32 +31,38 @@ class Worker(Thread):
                 break
 
 
+def argparser() -> ArgumentParser:
+    """Returns command line arguments parser."""
+    parser = ArgumentParser()
+
+    parser.add_argument(
+        "--accounts",
+        type=str,
+        help="Path to the configuration file with opensky account data or json string",
+        default="account_data.json",
+    )
+
+    parser.add_argument("--db_host", type=str, default="127.0.0.1")
+
+    parser.add_argument("--db_port", type=int, default=6379)
+
+    return parser
+
+
 def main() -> None:
     """Entry point of the application."""
-    parser = ArgumentParser()
-    parser.add_argument(
-        "--config",
-        type=str,
-        help="Path to the configuration file",
-        default="config.ini",
-    )
-    args = parser.parse_args()
+    args = argparser().parse_args()
 
-    config_path = args.config
-
-    # Read credentials from config file
-    usernames = {}
-    passwords = {}
-
-    config = configparser.ConfigParser()
-    config.read(config_path)
-
-    for section in config.sections():
-        if "username" in config[section] and "password" in config[section]:
-            usernames[section] = config[section]["username"]
-            passwords[section] = config[section]["password"]
+    # Read credentials from config file or json-string
+    accounts = {}
+    if os.path.isfile(args.accounts):
+        with open(args.accounts) as json_file:
+            accounts = json.load(json_file)
+    else:
+        accounts = json.loads(args.accounts)
 
     # Connect to Redis Database
+    db = RedisDatabase(host=args.db_host, port=args.db_port)
     try:
         db.is_running()
     except DatabaseError:
@@ -83,52 +80,36 @@ def main() -> None:
     # Save current time as server startup time
     db.set_server_startup_time(datetime.now())
 
-    # Initilize process for server api
-    api_process = Process(target=run_fastapi)
-
     # Initialize worker threads for computation
-    worker_threads = create_carbon_computer_workers(bounding_boxes, usernames, passwords)
+    worker_threads = create_carbon_computer_workers(db, bounding_boxes, accounts)
 
-    # Initilize server carbon computations
-    try:
-        # Start the server api in a seperate process
-        api_process.start()
+    # Start worker threads
+    for worker_thread in worker_threads:
+        worker_thread.start()
 
-        # Start worker threads
-        for worker_thread in worker_threads:
-            worker_thread.start()
+    # Start the first carbon caclulation job now instead of waiting 1 minute
+    for job in schedule.get_jobs("carbon_computation"):
+        job.run()
 
-        # Start the first carbon caclulation job now instead of waiting 1 minute
-        for job in schedule.get_jobs("carbon_computation"):
-            job.run()
-
-        # call opensky api every (1 + calculation time) minute(s)
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
-    finally:
-        api_process.terminate()
-        api_process.join()
-
-
-def run_fastapi() -> None:
-    """Run the FastAPI application in a separate process."""
-    app = FastAPIWithDatabase(db, host=API_HOST, port=API_PORT)
-    uvicorn.run(app.app, host=API_HOST, port=API_PORT)
+    # call opensky api every (1 + calculation time) minute(s)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 
 def create_carbon_computer_workers(
-    bounding_boxes: dict[str, Tuple[float, float, float, float]],
-    usernames: dict[str, str],
-    passwords: dict[str, str],
+    db: Database,
+    bounding_boxes: Dict[str, Tuple[float, float, float, float]],
+    accounts: Dict[str, Dict[str, str]],
 ) -> List[Worker]:
     """Creates worker threads and provide them with necessary jobs.
 
     Args:
+        db (Database): Database for carbon data storage.
         bounding_boxes (dict[str, Tuple]): A dictionary of bounding boxes of the
             watched airspace.
-        usernames (dict[str, str]): A dictionary of usernames for authentication.
-        passwords (dict[str, str]): A dictionary of passwords for authentication.
+        accounts (Dict[str, Dict[str, str]]): A dictionary of account information like
+            {AIRSPACE: {"username": USERNAME, "password": PASSWORD}, ...}
 
     Returns:
         List[Worker]: List of worker threads to be started.
@@ -137,9 +118,11 @@ def create_carbon_computer_workers(
 
     # Create one worker thread for each airspace if username and password were provided
     for airspace, bounding_box in bounding_boxes.items():
-        username: Optional[str] = usernames.get(airspace)
-        password: Optional[str] = passwords.get(airspace)
-        if username and password:
+        if (
+            accounts.get(airspace)
+            and accounts[airspace].get("username")
+            and accounts[airspace].get("password")
+        ):
             carbon_computer = CarbonComputation(airspace, bounding_box)
             worker_thread = Worker()
 
@@ -150,8 +133,9 @@ def create_carbon_computer_workers(
                 time_unit="minutes",
                 interval=1,
                 tags=["carbon_computation", carbon_computer.airspace_name],
-                username=username,
-                password=password,
+                db=db,
+                username=accounts[airspace].get("username"),
+                password=accounts[airspace].get("password"),
                 carbon_computer=carbon_computer,
             )
 
@@ -162,12 +146,13 @@ def create_carbon_computer_workers(
                 time_unit="hours",
                 interval=1,
                 tags=["store_emission", carbon_computer.airspace_name],
+                db=db,
                 carbon_computer=carbon_computer,
             )
             worker_thread.daemon = True
             worker_threads.append(worker_thread)
         else:
-            print(f"Missing credentials for {airspace}. Skipping...")
+            print(f"Missing credentials for {airspace}. Skipping...", flush=True)
 
     return worker_threads
 
@@ -206,17 +191,18 @@ def schedule_job_function(
     if schedule_func:
         schedule_func.do(worker.jobqueue.put, (job_func, args, kwargs)).tag(*tags)
     else:
-        print("Invalid time unit")
+        print("Invalid time unit", flush=True)
 
 
 def update_total_co2_emission_job(
-    username: str, password: str, carbon_computer: CarbonComputation
+    db: Database, username: str, password: str, carbon_computer: CarbonComputation
 ) -> None:
     """Wrapper function for updating the total co2 emission.
 
     Should be executed as a job by the schedule library.
 
     Args:
+        db (Database): Carbon data storage.
         username (str): The username for authentication.
         password (str): The password for authentication.
         carbon_computer (CarbonComputation): Class instance to handle the computation
@@ -229,24 +215,34 @@ def update_total_co2_emission_job(
         new_emission = carbon_computer.get_co2_emission(
             response["states"], response["time"]
         )
-        print(f"New emission in {carbon_computer.airspace_name}: {new_emission}")
+        print(
+            f"New emission in {carbon_computer.airspace_name}: {new_emission}",
+            flush=True,
+        )
 
         # Update total emission
         total_emission = db.get_total_carbon(carbon_computer.airspace_name) + new_emission
-        print(f"Total emission in {carbon_computer.airspace_name}: {total_emission}")
+        print(
+            f"Total emission in {carbon_computer.airspace_name}: {total_emission}",
+            flush=True,
+        )
         db.set_total_carbon(carbon_computer.airspace_name, total_emission)
 
 
-def store_co2_emission_job(carbon_computer: CarbonComputation) -> None:
+def store_co2_emission_job(db: Database, carbon_computer: CarbonComputation) -> None:
     """Stores the hourly carbon emission value in an airspace to a database.
 
     Args:
+        db (Database): Carbon data storage.
         carbon_computer (CarbonComputation): Class instance to handle the computation
             of carbon emission in specific airspace.
     """
     total_value = db.get_total_carbon(carbon_computer.airspace_name)
     db.set_carbon_timestamp(carbon_computer.airspace_name, datetime.now(), total_value)
-    print(f"Stored total emission in {carbon_computer.airspace_name}: {total_value}")
+    print(
+        f"Stored total emission in {carbon_computer.airspace_name}: {total_value}",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

@@ -1,9 +1,12 @@
+import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
+
+from argparse import ArgumentParser
 from typing import Tuple, Dict, Optional
 from datetime import datetime
 
-from database import Database
+from database import Database, RedisDatabase, DatabaseError
 
 
 class FastAPIWithDatabase:
@@ -15,7 +18,7 @@ class FastAPIWithDatabase:
         port (int): Port for the FastAPI application. Default: 8000.
     """
 
-    def __init__(self, db: Database, host: str = "127.0.0.1", port: int = 8000) -> None:
+    def __init__(self, db: Database, host: str = "0.0.0.0", port: int = 8000) -> None:
         self.app = FastAPI()
         self.host = host
         self.port = port
@@ -69,3 +72,40 @@ class FastAPIWithDatabase:
                 airspace_name=airspace,
                 data=self.db.get_carbon_sequence(airspace, begin, end),
             )
+
+    def run(self) -> None:
+        """Run the FastAPI application with given host and port."""
+        uvicorn.run(self.app, host=self.host, port=self.port)
+
+
+def argparser() -> ArgumentParser:
+    """Returns command line arguments parser."""
+    parser = ArgumentParser()
+
+    parser.add_argument("--api_host", type=str, default="127.0.0.1")
+
+    parser.add_argument("--api_port", type=int, default=8000)
+
+    parser.add_argument("--db_host", type=str, default="127.0.0.1")
+
+    parser.add_argument("--db_port", type=int, default=6379)
+
+    return parser
+
+
+def main() -> None:
+    """Create and start server-side API."""
+    args = argparser().parse_args()
+    db = RedisDatabase(args.db_host, args.db_port)
+
+    try:
+        db.is_running()
+    except DatabaseError:
+        raise RuntimeError("Database connection failed.")
+
+    api = FastAPIWithDatabase(db, args.api_host, args.api_port)
+    api.run()
+
+
+if __name__ == "__main__":
+    main()

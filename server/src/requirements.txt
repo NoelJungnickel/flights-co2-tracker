@@ -1,9 +1,7 @@
-# For server side api
-fastapi==0.95.2
-uvicorn==0.22.0
-redis==4.5.5
+# For database
+redis
 
-# For calculate_co2 module
+# For carbon calculation
 requests
 geopy
 schedule

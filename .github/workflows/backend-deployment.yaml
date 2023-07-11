@@ -1,0 +1,66 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches:
+      - main
+      - cd_pipeling
+    paths:
+      - 'server/**'
+
+jobs:
+  testing:
+    uses: ./.github/workflows/python-linting-testing.yaml
+  deployment:
+    runs-on: ubuntu-latest
+    needs: [testing]
+    
+    # Set default working directory
+    defaults:
+        run:
+          working-directory: ./server
+
+    env:
+        PROJECT_ID: flights-co2-tracker-389215
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Google cloud authentication
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+      
+      # Configuration of the Google Cloud SDK
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+        with:
+          project_id: '${{ env.PROJECT_ID }}'
+
+      # Build Docker Images and push to Google Container Registry
+      - name: 'Build and Push Docker Images'
+        run: |
+          gcloud builds submit --region=europe-west1 --tag grc.io/${{ env.PROJECT_ID }}/api:latest ./dockerfiles/Dockerfile.api
+          gcloud builds submit --region=europe-west1 --tag grc.io/${{ env.PROJECT_ID }}/main:latest ./dockerfiles/Dockerfile.main
+
+      # Deploy Docker images to Compute Engine
+      - name: Deploy to Compute Engine
+        run: |
+            gcloud compute instances update-container co2-flight-tracker \
+            --container-image gcr.io/${{ env.PROJECT_ID }}/api:latest \
+            --container-network carbon_network \
+            --zone europe-west1-b
+
+            gcloud compute instances update-container co2-flight-tracker \
+            --container-image gcr.io/${{ env.PROJECT_ID }}/main:latest \
+            --container-network carbon_network \
+            --container-arg="--db_host" \
+            --container-arg="redis" \
+            --container-arg="--db_port" \
+            --container-arg="6379" \
+            --container-arg="--accounts" \
+            --container-arg="${{ secrets.ACCOUNTS_CONFIG }}" \
+            --zone europe-west1-b
+        

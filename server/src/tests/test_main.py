@@ -46,17 +46,11 @@ class TestMain:
         "london": (51.344500, -0.388934, 51.643400, 0.194758),
         "madrid": (40.312817, -3.831991, 40.561061, -3.524374),
     }
-    usernames = {
-        "berlin": "berlin",
-        "paris": "paris",
-        "london": "london",
-        "madrid": "madrid",
-    }
-    passwords = {
-        "berlin": "bpass",
-        "paris": "ppass",
-        "london": "lpass",
-        "madrid": "mpass",
+    accounts = {
+        "berlin": {"username": "berlin", "password": "bpass"},
+        "paris": {"username": "paris", "password": "ppass"},
+        "london": {"username": "london", "password": "lpass"},
+        "madrid": {"username": "madrid", "password": "mpass"},
     }
 
     @typing.no_type_check
@@ -67,9 +61,7 @@ class TestMain:
         One worker thread for every airspace/city
         """
         bounding_boxes = self.bounding_boxes
-        worker_threads = create_carbon_computer_workers(
-            bounding_boxes, self.usernames, self.passwords
-        )
+        worker_threads = create_carbon_computer_workers("", bounding_boxes, self.accounts)
         for worker_thread in worker_threads:
             worker_thread.start()
 

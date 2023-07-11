@@ -2,6 +2,9 @@ name: python-linting-testing
 
 on: 
   push:
+    branches-ignore:
+        - main
+  workflow_call:
 
 jobs:
   linting-and-testing:
@@ -11,7 +14,7 @@ jobs:
     # set default working directory
     defaults:
         run:
-          working-directory: ./server
+          working-directory: ./server/src
 
     steps:
     # downloads the repository code to the runner's file system for workflow access
@@ -24,8 +27,11 @@ jobs:
         python-version: '3.11'
 
     # installs dependencies from requirements.txt
-    - name: Install dependencies
+    - name: Install main dependencies
       run: pip install -r requirements.txt
+
+    - name: Install api dependencies
+      run: pip install -r api/requirements.txt
 
     # run ruff on Python files
     - name: Run linter
