@@ -109,7 +109,7 @@ def create_carbon_computer_workers(
         bounding_boxes (dict[str, Tuple]): A dictionary of bounding boxes of the
             watched airspace.
         accounts (Dict[str, Dict[str, str]]): A dictionary of account information like
-            {AIRSPACE: {"username": USERNAME, "password": PASSWORD}, ...}
+            {AIRSPACE: {"username": USERNAME, "password": PASSWORD}, ...}.
 
     Returns:
         List[Worker]: List of worker threads to be started.

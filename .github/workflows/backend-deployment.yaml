@@ -39,7 +39,8 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v1'
         with:
           project_id: '${{ env.PROJECT_ID }}'
-
+    
+      # Docker client configuration    
       - name: Configure Docker Client
         run: |-
             gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
@@ -59,12 +60,10 @@ jobs:
         run: |
             gcloud compute instances update-container co2-flight-tracker \
             --container-image europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest \
-            --container-network carbon_network \
             --zone europe-west1-b
 
             gcloud compute instances update-container co2-flight-tracker \
             --container-image europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest \
-            --container-network carbon_network \
             --container-arg="--db_host" \
             --container-arg="redis" \
             --container-arg="--db_port" \
