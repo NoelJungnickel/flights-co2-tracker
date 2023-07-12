@@ -1,7 +1,7 @@
 import { redirect, type V2_MetaFunction } from "@remix-run/node";
 
 export const loader = async () => {
-  return redirect(`/stats`);
+  return redirect(`/stats/berlin`);
 };
 
 export const meta: V2_MetaFunction = () => {
