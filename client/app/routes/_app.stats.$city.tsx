@@ -1,6 +1,7 @@
-import type { TypedResponse } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import type { ActionArgs, LoaderArgs, TypedResponse } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import {
+  Outlet,
   isRouteErrorResponse,
   useLoaderData,
   useRouteError,
@@ -14,24 +15,41 @@ type Stats = {
   leaderboardContent: LeaderboardEntry[];
 };
 
-export async function loader(): Promise<TypedResponse<Stats>> {
-  let API_URL = "http://35.210.64.77:8000/api/total/berlin";
-  // if (process.env.NODE_ENV === "development") {
-  //   API_URL = "http://127.0.0.1:8000/api/total/berlin";
-  // }
+type AirspaceCarbonResponse = {
+  airspace_name: string;
+  total: number;
+};
 
-  const totalBerlinCO2KgReponse = await fetch(API_URL);
+export async function action({ request }: ActionArgs) {
+  const body = await request.formData();
+  const data = Object.fromEntries(body);
+  const { option } = data;
+  console.log(option);
+  return redirect(`/stats/${option}`);
+}
 
-  if (!totalBerlinCO2KgReponse) {
+export async function loader({
+  params,
+}: LoaderArgs): Promise<TypedResponse<Stats>> {
+  const { city } = params;
+  let API_URL = `http://35.210.64.77:8000/api/${city?.toLowerCase()}/total`;
+  if (process.env.NODE_ENV === "development") {
+    API_URL = `http://127.0.0.1:8000/api/${city?.toLowerCase()}/total`;
+  }
+
+  const totalCO2KgReponse = await fetch(API_URL);
+
+  if (!totalCO2KgReponse) {
     throw new Response("Internal Server Error", {
       status: 500,
     });
   }
 
-  const totalBerlinCO2Kg = await totalBerlinCO2KgReponse.json();
+  const totalCO2Kg = (await totalCO2KgReponse.json()) as AirspaceCarbonResponse;
+  console.log(totalCO2Kg);
 
   return json({
-    totalLocationCO2KG: totalBerlinCO2Kg,
+    totalLocationCO2KG: totalCO2Kg.total,
     leaderboardContent: [
       { placing: 1, name: "Elon Musk", kgCO2: 200 },
       { placing: 2, name: "Taylor Swift", kgCO2: 190 },

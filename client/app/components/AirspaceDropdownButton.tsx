@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { type AirspaceOption } from "./AirspaceCard";
+import { Form, useSubmit } from "@remix-run/react";
 
 type Props = {
   options: AirspaceOption[];
@@ -8,6 +9,7 @@ type Props = {
 };
 
 function AirspaceDropdownButton({ options, defaultOption, onSelect }: Props) {
+  const submit = useSubmit();
   const [selectedOption, setSelectedOption] = useState(defaultOption);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -16,6 +18,7 @@ function AirspaceDropdownButton({ options, defaultOption, onSelect }: Props) {
     setSelectedOption(option);
     onSelect(option);
     setIsOpen(false);
+    submit({ option }, { method: "post" });
   };
 
   const toggleDropdown = () => {
@@ -60,16 +63,22 @@ function AirspaceDropdownButton({ options, defaultOption, onSelect }: Props) {
           </svg>
         </button>
       </div>
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-sky-500 shadow-lg ring-1 ring-black ring-opacity-5 md:left-0">
-          <div
-            role="menu"
-            aria-orientation="vertical"
-            aria-labelledby="dropdown-menu-button"
-          >
-            {options.map((option) => (
+      <div
+        className={`${
+          isOpen ? "block" : "hidden"
+        } absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-sky-500 shadow-lg ring-1 ring-black ring-opacity-5 md:left-0`}
+      >
+        <div
+          role="menu"
+          aria-orientation="vertical"
+          aria-labelledby="dropdown-menu-button"
+        >
+          {options.map((option) => (
+            <Form method="post" key={option}>
               <button
-                key={option}
+                name="_action"
+                value="country-selection"
+                aria-label="select country"
                 className={`${
                   option === selectedOption
                     ? "bg-sky-600 hover:bg-sky-600 hover:text-sky-50"
@@ -81,10 +90,10 @@ function AirspaceDropdownButton({ options, defaultOption, onSelect }: Props) {
               >
                 {option}
               </button>
-            ))}
-          </div>
+            </Form>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

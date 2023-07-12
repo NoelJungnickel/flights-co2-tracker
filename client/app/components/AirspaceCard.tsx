@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AirspaceDropdownButton from "./AirspaceDropdownButton";
 
-const airspaceOptions = ["Berlin"] as const;
+const airspaceOptions = ["Berlin", "London", "Madrid", "Paris"] as const;
 
 export type AirspaceOption = (typeof airspaceOptions)[number];
 
