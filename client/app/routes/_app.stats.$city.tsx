@@ -6,7 +6,8 @@ import {
   useLoaderData,
   useRouteError,
 } from "@remix-run/react";
-import AirspaceCard, { AirspaceOption } from "~/components/AirspaceCard";
+import type { AirspaceOption } from "~/components/AirspaceCard";
+import AirspaceCard from "~/components/AirspaceCard";
 import type { LeaderboardEntry } from "~/components/LeaderboardCard";
 import LeaderboardCard from "~/components/LeaderboardCard";
 
