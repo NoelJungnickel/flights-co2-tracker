@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - cd_pipeling
+      - zip_docker
     paths:
       - 'server/**'
 
@@ -42,8 +43,8 @@ jobs:
       # Build Docker Images and push to Google Container Registry
       - name: 'Build and Push Docker Images'
         run: |
-          gcloud builds submit --region=europe-west1 --tag gcr.io/${{ env.PROJECT_ID }}/api:latest ./dockerfiles/Dockerfile.api
-          gcloud builds submit --region=europe-west1 --tag gcr.io/${{ env.PROJECT_ID }}/main:latest ./dockerfiles/Dockerfile.main
+          gcloud builds submit --config cloudbuild.yaml .
+
 
       # Deploy Docker images to Compute Engine
       - name: Deploy to Compute Engine
