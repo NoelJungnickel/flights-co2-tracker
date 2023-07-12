@@ -102,7 +102,7 @@ def create_carbon_computer_workers(
     bounding_boxes: Dict[str, Tuple[float, float, float, float]],
     accounts: Dict[str, Dict[str, str]],
 ) -> List[Worker]:
-    """Creates worker threads and provide them with necessary jobs.
+    """Creates worker threads and provides them with necessary jobs.
 
     Args:
         db (Database): Database for carbon data storage.
