@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - cd_pipeling
+      - zip_docker
     paths:
       - 'server/**'
 

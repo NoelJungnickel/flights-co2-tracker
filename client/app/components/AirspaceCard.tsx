@@ -1,30 +1,60 @@
 import { useEffect, useState } from "react";
 import AirspaceDropdownButton from "./AirspaceDropdownButton";
 
-const airspaceOptions = ["Berlin"] as const;
+const airspaceOptions = ["Berlin", "London", "Madrid", "Paris"] as const;
 
 export type AirspaceOption = (typeof airspaceOptions)[number];
 
 type Props = {
+  location: AirspaceOption;
   totalCO2LocationKG: number;
+  serverstart: number;
 };
 
 export const CO2_KG_LAST_VISIT_STORAGE_KEY = "co2_last_visit";
 
-function AirspaceCard({ totalCO2LocationKG }: Props) {
+function formatDate(unixTime: number) {
+  const milliseconds = unixTime * 1000;
+  const date = new Date(milliseconds);
+
+  const day = date.getDate();
+  const monthIndex = date.getMonth();
+  const year = date.getFullYear();
+
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const month = monthNames[monthIndex];
+  const formattedDate = `${day} ${month} ${year}`;
+
+  return formattedDate;
+}
+
+function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
   const [lastVisitLocationCO2KG, setLastVisitLocationCO2KG] = useState(0);
 
   useEffect(() => {
     const handleTabClosing = () => {
       window.localStorage.setItem(
-        CO2_KG_LAST_VISIT_STORAGE_KEY,
+        `CO2_KG_LAST_VISIT_STORAGE_KEY_${location.toUpperCase()}`,
         totalCO2LocationKG.toString()
       );
     };
 
     let localCo2LastVisitKG = 0;
     const maybeCO2lastVisitKgString = window.localStorage.getItem(
-      CO2_KG_LAST_VISIT_STORAGE_KEY
+      `CO2_KG_LAST_VISIT_STORAGE_KEY_${location.toUpperCase()}`
     );
 
     if (maybeCO2lastVisitKgString !== null) {
@@ -39,6 +69,8 @@ function AirspaceCard({ totalCO2LocationKG }: Props) {
     };
   }, [totalCO2LocationKG]);
 
+  console.log(formatDate(serverstart));
+
   return (
     <div className="h-fit w-full rounded-lg bg-zinc-700 py-5">
       <div className="flex w-full justify-center gap-3 pb-6">
@@ -47,7 +79,7 @@ function AirspaceCard({ totalCO2LocationKG }: Props) {
         </h1>
         <AirspaceDropdownButton
           options={[...airspaceOptions]}
-          defaultOption="Berlin"
+          defaultOption={location}
           onSelect={(option) => console.log(option)}
         />
       </div>
@@ -56,7 +88,7 @@ function AirspaceCard({ totalCO2LocationKG }: Props) {
           {Math.floor(totalCO2LocationKG / 1000)}
           <span className="text-xl md:text-5xl">t</span>
           <p className="block w-full pt-2 text-base font-normal text-sky-50 sm:hidden">
-            since 13 June 2023
+            since serverstart {formatDate(serverstart)}
           </p>
         </div>
         <div className="w-1/2 py-5 text-center">
@@ -79,7 +111,7 @@ function AirspaceCard({ totalCO2LocationKG }: Props) {
       </div>
       <div className="hidden w-full pt-4 text-center sm:flex">
         <p className="w-1/2 text-lg text-sky-50 md:text-xl">
-          since 13 June 2023
+          since serverstart {formatDate(serverstart)}
         </p>
         <p className="w-1/2 text-lg text-sky-50 md:text-xl">
           more since your last visit
