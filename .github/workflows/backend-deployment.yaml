@@ -43,19 +43,21 @@ jobs:
       # Build Docker Images and push to Google Container Registry
       - name: 'Build and Push Docker Images'
         run: |
-          gcloud builds submit --config cloudbuild.yaml .
-
+          docker tag .dockerfiles/Dockerfile.main europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest
+          docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest
+          docker tag .dockerfiles/Dockerfile.api europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest
+          docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest
 
       # Deploy Docker images to Compute Engine
       - name: Deploy to Compute Engine
         run: |
             gcloud compute instances update-container co2-flight-tracker \
-            --container-image gcr.io/${{ env.PROJECT_ID }}/api:latest \
+            --container-image europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest \
             --container-network carbon_network \
             --zone europe-west1-b
 
             gcloud compute instances update-container co2-flight-tracker \
-            --container-image gcr.io/${{ env.PROJECT_ID }}/main:latest \
+            --container-image europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest \
             --container-network carbon_network \
             --container-arg="--db_host" \
             --container-arg="redis" \
