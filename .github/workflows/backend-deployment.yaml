@@ -7,6 +7,7 @@ on:
 
     paths:
       - 'server/**'
+  workflow_dispatch:
 
 jobs:
   testing:
@@ -46,7 +47,7 @@ jobs:
           docker tag main:latest europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest
           docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest
           docker build -t api:latest -f .dockerfiles/Dockerfile.api
-          docker tag .dockerfiles/Dockerfile.api europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest
+          docker tag api:latest europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest
           docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest
 
       # Deploy Docker images to Compute Engine
