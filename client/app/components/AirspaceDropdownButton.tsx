@@ -8,9 +8,15 @@ type Props = {
   onSelect: (option: AirspaceOption) => void;
 };
 
+function capitalizeFirstLetter(word: string) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
 function AirspaceDropdownButton({ options, defaultOption, onSelect }: Props) {
   const submit = useSubmit();
-  const [selectedOption, setSelectedOption] = useState(defaultOption);
+  const [selectedOption, setSelectedOption] = useState(
+    capitalizeFirstLetter(defaultOption)
+  );
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

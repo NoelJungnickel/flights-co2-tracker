@@ -6,18 +6,24 @@ import {
   useLoaderData,
   useRouteError,
 } from "@remix-run/react";
-import AirspaceCard from "~/components/AirspaceCard";
+import AirspaceCard, { AirspaceOption } from "~/components/AirspaceCard";
 import type { LeaderboardEntry } from "~/components/LeaderboardCard";
 import LeaderboardCard from "~/components/LeaderboardCard";
 
 type Stats = {
+  location: AirspaceOption;
   totalLocationCO2KG: number;
   leaderboardContent: LeaderboardEntry[];
+  serverstart: number;
 };
 
 type AirspaceCarbonResponse = {
   airspace_name: string;
   total: number;
+};
+
+type ServerStart = {
+  timestamp: number;
 };
 
 export async function action({ request }: ActionArgs) {
@@ -32,12 +38,16 @@ export async function loader({
   params,
 }: LoaderArgs): Promise<TypedResponse<Stats>> {
   const { city } = params;
-  let API_URL = `http://35.210.64.77:8000/api/${city?.toLowerCase()}/total`;
+  let API_URL = `http://35.210.64.77:8000/api`;
   if (process.env.NODE_ENV === "development") {
-    API_URL = `http://127.0.0.1:8000/api/${city?.toLowerCase()}/total`;
+    API_URL = `http://127.0.0.1:8000/api`;
   }
 
-  const totalCO2KgReponse = await fetch(API_URL);
+  const totalCO2KgReponse = await fetch(
+    `${API_URL}/${city?.toLowerCase()}/total`
+  );
+
+  const serverstartResponse = await fetch(`${API_URL}/serverstart`);
 
   if (!totalCO2KgReponse) {
     throw new Response("Internal Server Error", {
@@ -46,10 +56,14 @@ export async function loader({
   }
 
   const totalCO2Kg = (await totalCO2KgReponse.json()) as AirspaceCarbonResponse;
-  console.log(totalCO2Kg);
+  const serverstart = (await serverstartResponse.json()) as ServerStart;
+  const { timestamp } = serverstart;
+  console.log(serverstart);
 
   return json({
+    location: city! as AirspaceOption,
     totalLocationCO2KG: totalCO2Kg.total,
+    serverstart: timestamp,
     leaderboardContent: [
       { placing: 1, name: "Elon Musk", kgCO2: 200 },
       { placing: 2, name: "Taylor Swift", kgCO2: 190 },
@@ -61,12 +75,17 @@ export async function loader({
 }
 
 function Card() {
-  const { totalLocationCO2KG, leaderboardContent } =
+  const { location, totalLocationCO2KG, leaderboardContent, serverstart } =
     useLoaderData<typeof loader>();
 
+  console.log(serverstart);
   return (
     <div className="flex w-full flex-col gap-3 lg:w-3/4 xl:w-2/3">
-      <AirspaceCard totalCO2LocationKG={totalLocationCO2KG} />
+      <AirspaceCard
+        serverstart={serverstart}
+        location={location}
+        totalCO2LocationKG={totalLocationCO2KG}
+      />
       <div className="h-px w-11/12 self-center bg-zinc-700/20"></div>
       <LeaderboardCard leaderboardContent={leaderboardContent} />
     </div>
