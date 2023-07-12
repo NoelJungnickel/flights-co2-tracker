@@ -91,7 +91,7 @@ def main() -> None:
     for job in schedule.get_jobs("carbon_computation"):
         job.run()
 
-    # call opensky api every (1 + calculation time) minute(s)
+    # Call opensky api every (1 + calculation time) minute(s)
     while True:
         schedule.run_pending()
         time.sleep(1)

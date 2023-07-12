@@ -43,10 +43,10 @@ jobs:
       # Build Docker Images and push to Google Container Registry
       - name: 'Build and Push Docker Images'
         run: |
-          docker build -t main:latest -f .dockerfiles/Dockerfile.main
+          docker build . -t main:latest -f .dockerfiles/Dockerfile.main
           docker tag main:latest europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest
           docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest
-          docker build -t api:latest -f .dockerfiles/Dockerfile.api
+          docker build . -t api:latest -f .dockerfiles/Dockerfile.api
           docker tag api:latest europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest
           docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest
 
