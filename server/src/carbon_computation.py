@@ -21,6 +21,9 @@ class CarbonComputation:
         self.airspace_name: str = airspace_name
         self.bounding_box: Tuple[float, float, float, float] = bounding_box
         self.aircrafts_in_airspace: Dict = {}
+        self.bounding_box_diagonal: float = geopy_distance.distance(
+            (bounding_box[0], bounding_box[1]), (bounding_box[2], bounding_box[3])
+        ).km
 
     def get_co2_emission(
         self, states: List[List[Any]], request_time: int, exit_time_threshold: int = 300
@@ -104,6 +107,15 @@ class CarbonComputation:
                 state["position"],
                 (edge_position[0], edge_position[1]),
             ).km
+
+            if distance >= self.bounding_box_diagonal:
+                print(
+                    f"WARNING: distance is greater than bounding box diagonal\n"
+                    f"{self.airspace_name} - {aircraft_id} - "
+                    f"true_track: {state['true_track']}, "
+                    f"edge position: {edge_position}, old position: {state['position']}\n"
+                    f"distance: {distance}"
+                )
 
             if distance > 0:
                 self.aircrafts_in_airspace[aircraft_id]["curr_distance"] = distance
@@ -202,7 +214,7 @@ class CarbonComputation:
         true_track: float,
         position: Tuple[float, float],
     ) -> Tuple[float, float]:
-        """Calculates the distance to the bounding box edge.
+        """Calculates the bounding box edge position based on the aircraft's true track.
 
         Args:
             true_track (float): The direction of the aircraft in decimal degrees,
@@ -254,7 +266,7 @@ class CarbonComputation:
             else:
                 # meets right edge
                 edge_pos_la = pos_la - de
-                edge_pos_lo = lamax
+                edge_pos_lo = lomax
 
             return (edge_pos_la, edge_pos_lo)
 
@@ -312,5 +324,5 @@ class CarbonComputation:
             float: The amount of CO2 emission in kilograms.
         """
         fuel_used_kg = fuel_consumption_rate * distance
-        co2_kg = fuel_used_kg * 3.15
+        co2_kg = fuel_used_kg * 3.16
         return co2_kg

@@ -227,6 +227,8 @@ def update_total_co2_emission_job(
             flush=True,
         )
         db.set_total_carbon(carbon_computer.airspace_name, total_emission)
+    else:
+        print(f"{carbon_computer.airspace_name} - No response from OpenSky Network")
 
 
 def store_co2_emission_job(db: Database, carbon_computer: CarbonComputation) -> None:
