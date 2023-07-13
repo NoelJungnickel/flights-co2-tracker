@@ -324,5 +324,5 @@ class CarbonComputation:
             float: The amount of CO2 emission in kilograms.
         """
         fuel_used_kg = fuel_consumption_rate * distance
-        co2_kg = fuel_used_kg * 3.15
+        co2_kg = fuel_used_kg * 3.16
         return co2_kg
