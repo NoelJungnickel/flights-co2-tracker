@@ -9,7 +9,7 @@ from queue import Queue
 from argparse import ArgumentParser
 
 from opensky_network import get_states
-from carbon_computation import CarbonComputation
+from carbon_computation import StateCarbonComputation
 from database import Database, DatabaseError, RedisDatabase
 
 
@@ -123,7 +123,7 @@ def create_carbon_computer_workers(
             and accounts[airspace].get("username")
             and accounts[airspace].get("password")
         ):
-            carbon_computer = CarbonComputation(airspace, bounding_box)
+            carbon_computer = StateCarbonComputation(airspace, bounding_box)
             worker_thread = Worker()
 
             # Make carbon computation every minute
@@ -195,7 +195,7 @@ def schedule_job_function(
 
 
 def update_total_co2_emission_job(
-    db: Database, username: str, password: str, carbon_computer: CarbonComputation
+    db: Database, username: str, password: str, carbon_computer: StateCarbonComputation
 ) -> None:
     """Wrapper function for updating the total co2 emission.
 
@@ -221,7 +221,9 @@ def update_total_co2_emission_job(
         )
 
         # Update total emission
-        total_emission = db.get_total_carbon(carbon_computer.airspace_name) + new_emission
+        total_emission = (
+            db.get_total_carbon(carbon_computer.airspace_name) + new_emission
+        )
         print(
             f"Total emission in {carbon_computer.airspace_name}: {total_emission}",
             flush=True,
@@ -231,7 +233,9 @@ def update_total_co2_emission_job(
         print(f"{carbon_computer.airspace_name} - No response from OpenSky Network")
 
 
-def store_co2_emission_job(db: Database, carbon_computer: CarbonComputation) -> None:
+def store_co2_emission_job(
+    db: Database, carbon_computer: StateCarbonComputation
+) -> None:
     """Stores the hourly carbon emission value in an airspace to a database.
 
     Args:

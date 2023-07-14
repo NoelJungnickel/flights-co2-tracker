@@ -54,14 +54,18 @@ class TestMain:
     }
 
     @typing.no_type_check
-    @patch("main.update_total_co2_emission_job", wraps=mock_update_total_co2_emission_job)
+    @patch(
+        "main.update_total_co2_emission_job", wraps=mock_update_total_co2_emission_job
+    )
     def test_create_correct_workers(self, mock_update_total_co2_emission_job) -> None:
         """Checks whether it creates correct worker threads.
 
         One worker thread for every airspace/city
         """
         bounding_boxes = self.bounding_boxes
-        worker_threads = create_carbon_computer_workers("", bounding_boxes, self.accounts)
+        worker_threads = create_carbon_computer_workers(
+            "", bounding_boxes, self.accounts
+        )
         for worker_thread in worker_threads:
             worker_thread.start()
 
