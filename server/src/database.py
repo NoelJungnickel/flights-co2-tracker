@@ -79,6 +79,16 @@ class Database(ABC):
         """Stores the carbon emission value in an airspace at specific timestamp."""
         pass
 
+    @abstractmethod
+    def get_celeb_emissions(self) -> Dict[str, float]:
+        """Returns dictionary of celebs with their emission."""
+        pass
+
+    @abstractmethod
+    def set_celeb_emissions(self, celeb_emissions: Dict[str, float]) -> None:
+        """Stores carbon emission value of celebrities."""
+        pass
+
 
 class RedisDatabase(Database):
     """Implementation of database functions with a redis Database."""
@@ -141,10 +151,16 @@ class RedisDatabase(Database):
     ) -> Dict[int, float]:
         """Get sequence of carbon values in airspace between begin and end."""
         data = self.redis.zrangebyscore(airspace, begin, end, withscores=True)
-        return {
-            int(float(timestamp.decode())): float(value) for timestamp, value in data
-        }
+        return {int(float(timestamp.decode())): float(value) for timestamp, value in data}
 
     def set_carbon_timestamp(self, airspace: str, dt: datetime, value: float) -> None:
         """Stores the carbon emission value in an airspace at specific timestamp."""
         self.redis.zadd(airspace, {str(dt.timestamp()): value})
+
+    def get_celeb_emissions(self) -> Dict[str, float]:
+        """Returns dictionary of celebs with their emission."""
+        return self.hgetall("celeb")
+
+    def set_celeb_emissions(self, celeb_emissions: Dict[str, float]) -> None:
+        """Stores carbon emission value of celebrities."""
+        self.redis.hmset("celeb", celeb_emissions)

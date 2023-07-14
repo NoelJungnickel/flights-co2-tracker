@@ -3,14 +3,49 @@ import time
 import json
 import os
 from threading import Thread
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Callable, Tuple, List, Hashable, Any, Dict
 from queue import Queue
 from argparse import ArgumentParser
 
-from opensky_network import get_states
+from opensky_network import get_states_of_bounding_box, get_flights_by_aircrafts
 from carbon_computation import StateCarbonComputation
 from database import Database, DatabaseError, RedisDatabase
+
+BOUNDING_BOXES = {
+    "berlin": (52.3418234221, 13.0882097323, 52.6697240587, 13.7606105539),
+    "paris": (48.753020, 2.138901, 48.937837, 2.493896),
+    "london": (51.344500, -0.388934, 51.643400, 0.194758),
+    "madrid": (40.312817, -3.831991, 40.561061, -3.524374),
+}
+
+CELEB_AIRCRAFTS = {
+    "Bill Gates": ["AC39D6", "A17907"],
+    "Michael Jordan": ["A21FE6"],
+    "Taylor Swift": ["AC64C6"],
+    "Jim Carrey": ["A0F9E7"],
+    "Alan Sugar": ["406B7E"],
+    "John Travolta": ["A96F69"],
+    "Floyd Mayweather": ["A0CF7A"],
+    "Jay-Z": ["A7C582"],
+    "Steven Spielberg": ["AC701E"],
+    "Kim Kardashian": ["A18845"],
+    "Mark Wahlberg": ["A0AEFD"],
+    "Oprah Winfrey": ["A6D9E0"],
+    "Travis Scott": ["A1286D"],
+    "Tom Cruise": ["AB013E"],
+    "Jeff Bezos": ["A2AA92"],
+    "Kylie Jenner": ["AB0A46"],
+    "Marc Cuban": ["ACC306"],
+    "Elon Musk": ["A835AF", "A2AE0A", "A64304"],
+    "David Geffen": ["A1E50A"],
+    "John Kerry": ["A74CC8"],
+    "Robert Kraft": ["A805F0"],
+    "Ralph Lauren": ["A98146"],
+    "Donald Trump": ["AA3410"],
+    "Jerry Seinfeld": ["A9FF1E"],
+    "Nancy Walton Laurie": ["A67552"]
+}
 
 
 class Worker(Thread):
@@ -69,26 +104,24 @@ def main() -> None:
         raise RuntimeError("Database connection failed.")
 
     # Specify bounding boxes for airspaces to be watched
-    bounding_boxes = {
-        "berlin": (52.3418234221, 13.0882097323, 52.6697240587, 13.7606105539),
-        "paris": (48.753020, 2.138901, 48.937837, 2.493896),
-        "london": (51.344500, -0.388934, 51.643400, 0.194758),
-        "madrid": (40.312817, -3.831991, 40.561061, -3.524374),
-    }
-    db.set_airspaces(bounding_boxes)
+    db.set_airspaces(BOUNDING_BOXES)
 
     # Save current time as server startup time
     db.set_server_startup_time(datetime.now())
 
     # Initialize worker threads for computation
-    worker_threads = create_carbon_computer_workers(db, bounding_boxes, accounts)
+    worker_threads = create_carbon_computer_workers(
+        db, BOUNDING_BOXES, CELEB_AIRCRAFTS, accounts
+    )
 
     # Start worker threads
     for worker_thread in worker_threads:
         worker_thread.start()
 
-    # Start the first carbon caclulation job now instead of waiting 1 minute
-    for job in schedule.get_jobs("carbon_computation"):
+    # Start the first carbon caclulation job now instead of waiting
+    for job in schedule.get_jobs("state_computation"):
+        job.run()
+    for job in schedule.get_jobs("celeb_computation"):
         job.run()
 
     # Use schedule
@@ -100,6 +133,7 @@ def main() -> None:
 def create_carbon_computer_workers(
     db: Database,
     bounding_boxes: Dict[str, Tuple[float, float, float, float]],
+    celeb_aircrafts: Dict[str, List[str]],
     accounts: Dict[str, Dict[str, str]],
 ) -> List[Worker]:
     """Creates worker threads and provides them with necessary jobs.
@@ -108,6 +142,8 @@ def create_carbon_computer_workers(
         db (Database): Database for carbon data storage.
         bounding_boxes (dict[str, Tuple]): A dictionary of bounding boxes of the
             watched airspace.
+        celeb_aircrafts (Dict[str, List[str]]): Dictionary of celebs with their
+            aircraft icaos.
         accounts (Dict[str, Dict[str, str]]): A dictionary of account information like
             {AIRSPACE: {"username": USERNAME, "password": PASSWORD}, ...}.
 
@@ -132,7 +168,7 @@ def create_carbon_computer_workers(
                 job_func=update_total_co2_emission_job,
                 time_unit="minutes",
                 interval=1,
-                tags=["carbon_computation", carbon_computer.airspace_name],
+                tags=["state_computation", carbon_computer.airspace_name],
                 db=db,
                 username=accounts[airspace].get("username"),
                 password=accounts[airspace].get("password"),
@@ -153,6 +189,17 @@ def create_carbon_computer_workers(
             worker_threads.append(worker_thread)
         else:
             print(f"Missing credentials for {airspace}. Skipping...", flush=True)
+
+    celeb_thread = Worker()
+    schedule_job_function(
+        worker=celeb_thread,
+        job_func=update_celeb_emission_job,
+        time_unit="hours",
+        interval=12,
+        tags=["celeb_computation"],
+        db=db,
+        celeb_aircrafts=celeb_aircrafts
+    )
 
     return worker_threads
 
@@ -208,12 +255,12 @@ def update_total_co2_emission_job(
         carbon_computer (CarbonComputation): Class instance to handle the computation
             of carbon emission in specific airspace.
     """
-    response = get_states(username, password, carbon_computer.bounding_box)
+    res = get_states_of_bounding_box(username, password, carbon_computer.bounding_box)
 
     # Compute new emission (response["states"] can be null)
-    if response is not None and response["states"] is not None:
+    if res is not None and res["states"] is not None:
         new_emission = carbon_computer.get_co2_emission(
-            response["states"], response["time"]
+            res["states"], res["time"]
         )
         print(
             f"New emission in {carbon_computer.airspace_name}: {new_emission}",
@@ -221,9 +268,7 @@ def update_total_co2_emission_job(
         )
 
         # Update total emission
-        total_emission = (
-            db.get_total_carbon(carbon_computer.airspace_name) + new_emission
-        )
+        total_emission = db.get_total_carbon(carbon_computer.airspace_name) + new_emission
         print(
             f"Total emission in {carbon_computer.airspace_name}: {total_emission}",
             flush=True,
@@ -233,10 +278,8 @@ def update_total_co2_emission_job(
         print(f"{carbon_computer.airspace_name} - No response from OpenSky Network")
 
 
-def store_co2_emission_job(
-    db: Database, carbon_computer: StateCarbonComputation
-) -> None:
-    """Stores the hourly carbon emission value in an airspace to a database.
+def store_co2_emission_job(db: Database, carbon_computer: StateCarbonComputation) -> None:
+    """Stores the carbon emission value of an airspace to a database.
 
     Args:
         db (Database): Carbon data storage.
@@ -250,6 +293,21 @@ def store_co2_emission_job(
         flush=True,
     )
 
+def update_celeb_emission_job(
+    db: Database, celeb_aircrafts: Dict[str, List[str]]
+) -> None:
+    """Recomputes the celebrity carbon emissions of the last 30 days and stores them.
+
+    Args:
+        db (Database): Carbon data storage.
+        celeb_aircrafts (Dict[str, List[str]]): Dictionary of celebs with their
+            aircraft icaos.
+    """
+    end = datetime.now()
+    start = end - timedelta(days=30)
+
+    for celeb, icaos in celeb_aircrafts.items():
+        res = get_flights_by_aircrafts(icaos, start, end)
 
 if __name__ == "__main__":
     main()

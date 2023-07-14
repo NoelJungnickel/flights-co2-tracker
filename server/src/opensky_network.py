@@ -1,24 +1,35 @@
 import requests
 from requests.auth import HTTPBasicAuth
-from typing import Optional, Tuple, Dict, TypedDict
+from datetime import datetime
+from typing import Optional, Tuple, Dict, List, Any
 
 
-class FlightResponse(TypedDict):
-    icao24: str
-    firstSeen: int
-    estDepartureAirport: Optional[str]
-    lastSeen: int
-    estArrivalAirport: Optional[str]
-    callsign: str
-    estDepartureAirportHorizDistance: Optional[int]
-    estDepartureAirportVertDistance: Optional[int]
-    estArrivalAirportHorizDistance: Optional[int]
-    estArrivalAirportVertDistance: Optional[int]
-    departureAirportCandidatesCount: int
-    arrivalAirportCandidatesCount: int
+def _transform_state_vector(states: List[List[Any]]) -> Dict[str, Dict[str, Any]]:
+    """Transforms states into dictionary containing the useful information.
+
+    Args:
+        states (List[Dict[str, Any]]): An airstate vector in the opensky format to
+            be converted.
+
+    Returns:
+        Dict[str, Any]: Dictionary representing the airspace. Keys are ids of
+            aircrafts and values are dictionaries with data containing position,
+            velocity and true_track.
+    """
+    current_aircrafts = {}
+    for state in states:
+        if state[5] and state[6] and state[9] and state[10]:
+            current_aircrafts[state[0]] = {
+                "last_update": state[4],
+                "position": (state[6], state[5]),
+                "on_ground": state[8],
+                "velocity": state[9],
+                "true_track": state[10],
+            }
+    return current_aircrafts
 
 
-def get_states(
+def get_states_of_bounding_box(
     username: str, password: str, bounding_box: Tuple[float, float, float, float]
 ) -> Optional[Dict]:
     """Retrieves the states of aircraft within a specified bounding box.
@@ -39,50 +50,41 @@ def get_states(
     )
 
     try:
-        response = requests.get(
-            url, auth=HTTPBasicAuth(username, password), timeout=(10)
-        )
+        response = requests.get(url, auth=HTTPBasicAuth(username, password), timeout=(10))
 
-        if response.ok:
-            return response.json()
+        if response.ok and response.json():
+            response = response.json()
+            response["states"] = _transform_state_vector(response["states"])
         else:
             return None
     except requests.exceptions.Timeout:
         print("The request timed out")
         return None
 
-
-# TODO: improve return type and add docstring
-def get_flights_of_aircraft_max_24h(
-    icao: str, start: int, end: int, username: str, password: str
-) -> Optional[list[FlightResponse]]:
-    """Retrieves the flights of aircraft within a specified time interval which can't be longer than 24h.
+def get_flights_by_aircrafts(
+    icao24: str, start: datetime, end: datetime
+) -> Optional[Dict]:
+    """Retrieves flight data of given aircraft in specified time.
 
     Args:
-        icao (str): Icao code of aircraft
-        start (int): start of time interval in unix timestamp format
-        end (int): end of time interval in unix timestamp format
-        username (str): The username for authentication.
-        password (str): The password for authentication.
-
-
-    Returns:
-        dict: A dictionary containing the response JSON if successful, None
-            otherwise.
+        icao24 (str): Icao24 code of the aircraft.
+        start (datetime): Start time of the request.
+        end (datetime): End time of the request.
     """
-    day_in_seconds = 86400
-    if (end - start) > day_in_seconds:
+    start = start.timestamp()
+    end = end.timestamp()
+
+    # Check, if given time is within the Opensky limit of 30 days
+    if end <= start or end - start > 3600 * 24 * 30:
         return None
 
     url = (
-        f"https://opensky-network.org/api/flights/aircraft/?icao24={icao}"
+        f"https://opensky-network.org/api/flights/aircraft/?icao24={icao24}"
         f"&begin={start}&end={end}"
     )
 
     try:
-        response = requests.get(
-            url, auth=HTTPBasicAuth(username, password), timeout=(10)
-        )
+        response = requests.get(url, timeout=(10))
 
         if response.ok:
             return response.json()
