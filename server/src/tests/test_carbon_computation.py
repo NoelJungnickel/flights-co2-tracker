@@ -23,6 +23,35 @@ class TestCarbonComputation:
             0.0,
             -10.0,
         )
+        assert computer.get_edge_position(true_track=360, position=(0, 0)) == (
+            5.0,
+            0.0,
+        )
 
+        # First quadrant
         assert computer.get_edge_position(true_track=45, position=(2, 3)) == (5.0, 6.0)
         assert computer.get_edge_position(true_track=45, position=(2, 8)) == (4.0, 10.0)
+
+        # Second quadrant
+        assert computer.get_edge_position(true_track=135, position=(-2, 8)) == (
+            -4.0,
+            10.0,
+        )
+        assert computer.get_edge_position(true_track=135, position=(-4, 8)) == (-5.0, 9.0)
+
+        # Third quadrant
+        assert computer.get_edge_position(true_track=225, position=(-3, -4)) == (
+            -5.0,
+            -6.0,
+        )
+        assert computer.get_edge_position(true_track=225, position=(-3, -9)) == (
+            -4.0,
+            -10.0,
+        )
+
+        # Fourth quadrant
+        assert computer.get_edge_position(true_track=315, position=(2, -8)) == (
+            4.0,
+            -10.0,
+        )
+        assert computer.get_edge_position(true_track=315, position=(4, -8)) == (5.0, -9.0)
