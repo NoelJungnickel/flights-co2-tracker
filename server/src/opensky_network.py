@@ -82,7 +82,7 @@ def get_flights_by_aircrafts(
     if end_time <= start_time or end_time - start_time > 3600 * 24 * 30:
         return []
     url = (
-        f"https://opensky-network.org/api/flights/aircraft/?icao24=3c675a"
+        f"https://opensky-network.org/api/flights/aircraft/?icao24={icao24}"
         f"&begin={start_time}&end={end_time}"
     )
 

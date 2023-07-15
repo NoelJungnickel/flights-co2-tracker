@@ -316,7 +316,6 @@ def update_celeb_emission_job(
         icao24_distance = {}
         for icao in icaos:
             res = get_flights_by_aircrafts(icao, start, end)
-            print(res, flush=True)
             # Compute distance from time in air by assuming constant velocity of 700 km/h
             # This could be much improved by computing the distance between estimated
             # start and destination airport given by opensky, but we lack a free api for
