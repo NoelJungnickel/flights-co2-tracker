@@ -36,7 +36,7 @@ def get_carbon_by_distance(icao24_distance: Dict[str, float]) -> float:
         print("Using assumed fuel consumption rate for all aircrafts")
         assumed_co2_list = [
             _get_co2_emission_by_consumption_rate(distance)
-            for icao24, distance in icao24_distance
+            for icao24, distance in icao24_distance.items()
         ]
         new_co2_emission += sum(assumed_co2_list)
 
@@ -154,7 +154,7 @@ class StateCarbonComputation:
             if state["on_ground"]:
                 continue
 
-            edge_position = self._get_edge_position(
+            edge_position = self.get_edge_position(
                 state["true_track"],
                 state["position"],
             )
@@ -199,7 +199,7 @@ class StateCarbonComputation:
 
         return new_co2_emission
 
-    def _get_edge_position(
+    def get_edge_position(
         self,
         true_track: float,
         position: Tuple[float, float],

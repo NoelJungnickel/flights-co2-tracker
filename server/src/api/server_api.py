@@ -79,9 +79,7 @@ class FastAPIWithDatabase:
         @self.app.get("/api/leaderboard", response_model=CelebModel)
         async def get_celeb_emission() -> CelebModel:
             """Return dictionary of celebs with their respective emission."""
-            return CelebModel(
-                celeb_emission=self.db.get_celeb_emissions()
-            )
+            return CelebModel(celeb_emission=self.db.get_celeb_emissions())
 
     def run(self) -> None:
         """Run the FastAPI application with given host and port."""

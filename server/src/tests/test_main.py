@@ -54,27 +54,31 @@ class TestMain:
     }
 
     @typing.no_type_check
-    @patch("main.update_total_co2_emission_job", wraps=mock_update_total_co2_emission_job)
+    @patch(
+        "main.update_total_co2_emission_job", wraps=mock_update_total_co2_emission_job
+    )
     def test_create_correct_workers(self, mock_update_total_co2_emission_job) -> None:
         """Checks whether it creates correct worker threads.
 
         One worker thread for every airspace/city
         """
         bounding_boxes = self.bounding_boxes
-        worker_threads = create_carbon_computer_workers("", bounding_boxes, self.accounts)
+        worker_threads = create_carbon_computer_workers(
+            "", bounding_boxes, self.accounts
+        )
         for worker_thread in worker_threads:
             worker_thread.start()
 
         # Test correct number of working threads
-        assert threading.active_count() == 1 + len(self.bounding_boxes)
+        assert threading.active_count() == 2 + len(self.bounding_boxes)
 
         for worker_thread in worker_threads:
             # raise an exception to worker thread to stop it
             ctype_async_raise(worker_thread.ident, KeyboardInterrupt)
 
-        assert len(worker_threads) == len(bounding_boxes), (
+        assert len(worker_threads) == len(bounding_boxes) + 1, (
             "Number of worker threads created should equal "
-            "to number of airspaces observed"
+            "to number of airspaces observed plus a celeb thread"
         )
 
         # Test if there are two jobs for every airspace
@@ -84,13 +88,13 @@ class TestMain:
             for airspace in job.tags:
                 jobs_per_airspace[airspace] += 1
 
-        assert jobs_per_airspace["carbon_computation"] == len(bounding_boxes.keys())
+        assert jobs_per_airspace["state_computation"] == len(bounding_boxes.keys())
         assert jobs_per_airspace["store_emission"] == len(bounding_boxes.keys())
+        assert jobs_per_airspace["celeb_computation"] == 1
 
-        del jobs_per_airspace["carbon_computation"]
+        del jobs_per_airspace["state_computation"]
         del jobs_per_airspace["store_emission"]
-
-        print(jobs_per_airspace)
+        del jobs_per_airspace["celeb_computation"]
 
         assert set(jobs_per_airspace.keys()) == set(bounding_boxes.keys())
 

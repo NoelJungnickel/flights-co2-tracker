@@ -1,7 +1,7 @@
 import requests
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
-from typing import Optional, Tuple, Dict, List, Any
+from typing import Optional, Tuple, Dict, List, Any, Union
 
 
 def _transform_state_vector(states: List[List[Any]]) -> Dict[str, Dict[str, Any]]:
@@ -50,20 +50,24 @@ def get_states_of_bounding_box(
     )
 
     try:
-        response = requests.get(url, auth=HTTPBasicAuth(username, password), timeout=(10))
+        response = requests.get(
+            url, auth=HTTPBasicAuth(username, password), timeout=(10)
+        )
 
         if response.ok and response.json():
-            response = response.json()
-            response["states"] = _transform_state_vector(response["states"])
+            response_json = response.json()
+            response_json["states"] = _transform_state_vector(response_json["states"])
+            return response_json
         else:
             return None
     except requests.exceptions.Timeout:
-        print("The request timed out")
+        print("The states-request timed out")
         return None
+
 
 def get_flights_by_aircrafts(
     icao24: str, start: datetime, end: datetime
-) -> Optional[Dict]:
+) -> List[Dict[str, Union[str, int]]]:
     """Retrieves flight data of given aircraft in specified time.
 
     Args:
@@ -71,16 +75,15 @@ def get_flights_by_aircrafts(
         start (datetime): Start time of the request.
         end (datetime): End time of the request.
     """
-    start = start.timestamp()
-    end = end.timestamp()
+    start_time = start.timestamp()
+    end_time = end.timestamp()
 
     # Check, if given time is within the Opensky limit of 30 days
-    if end <= start or end - start > 3600 * 24 * 30:
-        return None
-
+    if end_time <= start_time or end_time - start_time > 3600 * 24 * 30:
+        return []
     url = (
-        f"https://opensky-network.org/api/flights/aircraft/?icao24={icao24}"
-        f"&begin={start}&end={end}"
+        f"https://opensky-network.org/api/flights/aircraft/?icao24=3c675a"
+        f"&begin={start_time}&end={end_time}"
     )
 
     try:
@@ -89,7 +92,7 @@ def get_flights_by_aircrafts(
         if response.ok:
             return response.json()
         else:
-            return None
+            return []
     except requests.exceptions.Timeout:
-        print("The request timed out")
-        return None
+        print("The flights-request timed out")
+        return []

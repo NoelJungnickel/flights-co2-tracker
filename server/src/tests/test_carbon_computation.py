@@ -1,17 +1,17 @@
 import pytest
 
-from carbon_computation import CarbonComputation
+from carbon_computation import StateCarbonComputation
 
 
 class TestCarbonComputation:
     """Class to group tests of the carbon computation."""
 
     @pytest.fixture
-    def computer(self) -> CarbonComputation:
+    def computer(self) -> StateCarbonComputation:
         """Initialize carbon computation for simple mock airspace."""
-        return CarbonComputation("test", (-5.0, -10.0, 5.0, 10.0))
+        return StateCarbonComputation("test", (-5.0, -10.0, 5.0, 10.0))
 
-    def test_correct_edge_positions(self, computer: CarbonComputation) -> None:
+    def test_correct_edge_positions(self, computer: StateCarbonComputation) -> None:
         """Test whether the estimated edge position are correct."""
         assert computer.get_edge_position(true_track=0, position=(0, 0)) == (5.0, 0.0)
         assert computer.get_edge_position(true_track=90, position=(0, 0)) == (0.0, 10.0)

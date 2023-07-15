@@ -9,7 +9,7 @@ from queue import Queue
 from argparse import ArgumentParser
 
 from opensky_network import get_states_of_bounding_box, get_flights_by_aircrafts
-from carbon_computation import StateCarbonComputation
+from carbon_computation import StateCarbonComputation, get_carbon_by_distance
 from database import Database, DatabaseError, RedisDatabase
 
 BOUNDING_BOXES = {
@@ -44,7 +44,7 @@ CELEB_AIRCRAFTS = {
     "Ralph Lauren": ["A98146"],
     "Donald Trump": ["AA3410"],
     "Jerry Seinfeld": ["A9FF1E"],
-    "Nancy Walton Laurie": ["A67552"]
+    "Nancy Walton Laurie": ["A67552"],
 }
 
 
@@ -195,11 +195,13 @@ def create_carbon_computer_workers(
         worker=celeb_thread,
         job_func=update_celeb_emission_job,
         time_unit="hours",
-        interval=12,
+        interval=2,
         tags=["celeb_computation"],
         db=db,
-        celeb_aircrafts=celeb_aircrafts
+        celeb_aircrafts=celeb_aircrafts,
     )
+    celeb_thread.daemon = True
+    worker_threads.append(celeb_thread)
 
     return worker_threads
 
@@ -259,16 +261,16 @@ def update_total_co2_emission_job(
 
     # Compute new emission (response["states"] can be null)
     if res is not None and res["states"] is not None:
-        new_emission = carbon_computer.get_co2_emission(
-            res["states"], res["time"]
-        )
+        new_emission = carbon_computer.get_co2_emission(res["states"], res["time"])
         print(
             f"New emission in {carbon_computer.airspace_name}: {new_emission}",
             flush=True,
         )
 
         # Update total emission
-        total_emission = db.get_total_carbon(carbon_computer.airspace_name) + new_emission
+        total_emission = (
+            db.get_total_carbon(carbon_computer.airspace_name) + new_emission
+        )
         print(
             f"Total emission in {carbon_computer.airspace_name}: {total_emission}",
             flush=True,
@@ -278,7 +280,9 @@ def update_total_co2_emission_job(
         print(f"{carbon_computer.airspace_name} - No response from OpenSky Network")
 
 
-def store_co2_emission_job(db: Database, carbon_computer: StateCarbonComputation) -> None:
+def store_co2_emission_job(
+    db: Database, carbon_computer: StateCarbonComputation
+) -> None:
     """Stores the carbon emission value of an airspace to a database.
 
     Args:
@@ -293,6 +297,7 @@ def store_co2_emission_job(db: Database, carbon_computer: StateCarbonComputation
         flush=True,
     )
 
+
 def update_celeb_emission_job(
     db: Database, celeb_aircrafts: Dict[str, List[str]]
 ) -> None:
@@ -303,11 +308,31 @@ def update_celeb_emission_job(
         celeb_aircrafts (Dict[str, List[str]]): Dictionary of celebs with their
             aircraft icaos.
     """
-    end = datetime.now()
-    start = end - timedelta(days=30)
+    end = datetime.now() - timedelta(days=30)
+    start = end - timedelta(days=28)
 
+    celeb_emissions = {}
     for celeb, icaos in celeb_aircrafts.items():
-        res = get_flights_by_aircrafts(icaos, start, end)
+        icao24_distance = {}
+        for icao in icaos:
+            res = get_flights_by_aircrafts(icao, start, end)
+            print(res, flush=True)
+            # Compute distance from time in air by assuming constant velocity of 700 km/h
+            # This could be much improved by computing the distance between estimated
+            # start and destination airport given by opensky, but we lack a free api for
+            # querying distance or coordinates of airportss
+            distance = sum(
+                [
+                    (int(flight["lastSeen"]) - int(flight["firstSeen"])) / 3600 * 700
+                    for flight in res if (flight["lastSeen"] and flight["firstSeen"])
+                ]
+            )
+            icao24_distance[icao] = distance
+        carbon = get_carbon_by_distance(icao24_distance)
+        celeb_emissions[celeb] = carbon
+        print(f"Emission by {celeb}: {carbon}", flush=True)
+    db.set_celeb_emissions(celeb_emissions)
+
 
 if __name__ == "__main__":
     main()
