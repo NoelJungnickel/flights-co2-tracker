@@ -50,9 +50,7 @@ def get_states_of_bounding_box(
     )
 
     try:
-        response = requests.get(
-            url, auth=HTTPBasicAuth(username, password), timeout=(10)
-        )
+        response = requests.get(url, auth=HTTPBasicAuth(username, password), timeout=(10))
 
         if response.ok and response.json():
             response_json = response.json()

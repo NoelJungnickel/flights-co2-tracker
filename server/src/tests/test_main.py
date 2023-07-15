@@ -52,11 +52,15 @@ class TestMain:
         "london": {"username": "london", "password": "lpass"},
         "madrid": {"username": "madrid", "password": "mpass"},
     }
+    celeb_aircrafts = {
+        "Bill Gates": ["AC39D6", "A17907"],
+        "Michael Jordan": ["A21FE6"],
+        "Taylor Swift": ["AC64C6"],
+        "Jim Carrey": ["A0F9E7"],
+    }
 
     @typing.no_type_check
-    @patch(
-        "main.update_total_co2_emission_job", wraps=mock_update_total_co2_emission_job
-    )
+    @patch("main.update_total_co2_emission_job", wraps=mock_update_total_co2_emission_job)
     def test_create_correct_workers(self, mock_update_total_co2_emission_job) -> None:
         """Checks whether it creates correct worker threads.
 
@@ -64,7 +68,7 @@ class TestMain:
         """
         bounding_boxes = self.bounding_boxes
         worker_threads = create_carbon_computer_workers(
-            "", bounding_boxes, self.accounts
+            "", bounding_boxes, self.celeb_aircrafts, self.accounts
         )
         for worker_thread in worker_threads:
             worker_thread.start()

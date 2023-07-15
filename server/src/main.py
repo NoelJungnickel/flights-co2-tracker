@@ -268,9 +268,7 @@ def update_total_co2_emission_job(
         )
 
         # Update total emission
-        total_emission = (
-            db.get_total_carbon(carbon_computer.airspace_name) + new_emission
-        )
+        total_emission = db.get_total_carbon(carbon_computer.airspace_name) + new_emission
         print(
             f"Total emission in {carbon_computer.airspace_name}: {total_emission}",
             flush=True,
@@ -280,9 +278,7 @@ def update_total_co2_emission_job(
         print(f"{carbon_computer.airspace_name} - No response from OpenSky Network")
 
 
-def store_co2_emission_job(
-    db: Database, carbon_computer: StateCarbonComputation
-) -> None:
+def store_co2_emission_job(db: Database, carbon_computer: StateCarbonComputation) -> None:
     """Stores the carbon emission value of an airspace to a database.
 
     Args:
@@ -323,7 +319,8 @@ def update_celeb_emission_job(
             distance = sum(
                 [
                     (int(flight["lastSeen"]) - int(flight["firstSeen"])) / 3600 * 700
-                    for flight in res if (flight["lastSeen"] and flight["firstSeen"])
+                    for flight in res
+                    if (flight["lastSeen"] and flight["firstSeen"])
                 ]
             )
             icao24_distance[icao] = distance
