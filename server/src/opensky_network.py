@@ -73,8 +73,8 @@ def get_flights_by_aircrafts(
         start (datetime): Start time of the request.
         end (datetime): End time of the request.
     """
-    start_time = start.timestamp()
-    end_time = end.timestamp()
+    start_time = int(start.timestamp())
+    end_time = int(end.timestamp())
 
     # Check, if given time is within the Opensky limit of 30 days
     if end_time <= start_time or end_time - start_time > 3600 * 24 * 30:

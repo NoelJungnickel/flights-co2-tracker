@@ -195,7 +195,7 @@ def create_carbon_computer_workers(
         worker=celeb_thread,
         job_func=update_celeb_emission_job,
         time_unit="hours",
-        interval=2,
+        interval=1,
         tags=["celeb_computation"],
         db=db,
         celeb_aircrafts=celeb_aircrafts,
@@ -304,8 +304,8 @@ def update_celeb_emission_job(
         celeb_aircrafts (Dict[str, List[str]]): Dictionary of celebs with their
             aircraft icaos.
     """
-    end = datetime.now() - timedelta(days=30)
-    start = end - timedelta(days=28)
+    end = datetime.now()
+    start = end - timedelta(days=30)
 
     celeb_emissions = {}
     for celeb, icaos in celeb_aircrafts.items():
