@@ -52,7 +52,7 @@ def get_states_of_bounding_box(
     try:
         response = requests.get(url, auth=HTTPBasicAuth(username, password), timeout=(10))
 
-        if response.ok and response.json():
+        if response.ok and response.json() and response.json().get("states"):
             response_json = response.json()
             response_json["states"] = _transform_state_vector(response_json["states"])
             return response_json

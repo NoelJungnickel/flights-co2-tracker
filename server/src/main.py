@@ -260,7 +260,7 @@ def update_total_co2_emission_job(
     res = get_states_of_bounding_box(username, password, carbon_computer.bounding_box)
 
     # Compute new emission (response["states"] can be null)
-    if res is not None and res["states"] is not None:
+    if res is not None:
         new_emission = carbon_computer.get_co2_emission(res["states"], res["time"])
         print(
             f"New emission in {carbon_computer.airspace_name}: {new_emission}",
