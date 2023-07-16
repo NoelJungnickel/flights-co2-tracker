@@ -328,6 +328,7 @@ def update_celeb_emission_job(
         celeb_emissions[celeb] = carbon
         print(f"Emission by {celeb}: {carbon}", flush=True)
     db.set_celeb_emissions(celeb_emissions)
+    print("Stored celebrity emissions", flush=True)
 
 
 if __name__ == "__main__":
