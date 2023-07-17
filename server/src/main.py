@@ -87,7 +87,6 @@ def argparser() -> ArgumentParser:
 def main() -> None:
     """Entry point of the application."""
     args = argparser().parse_args()
-    print(f"args.accounts: {args.accounts}")
 
     # Read credentials from config file or json-string
     accounts = {}
