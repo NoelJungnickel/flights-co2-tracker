@@ -4,6 +4,22 @@ export const celebPicturesURL = [
     url: "https://assets.teenvogue.com/photos/558307fefb1995762be2a331/1:1/w_200,h_200,c_limit/entertainment-2015-04-taylor-swift-rumors-th.jpg",
   },
   {
+    name: "Kylie Jenner",
+    url: "https://cdn.repeller.com/wp-content/uploads/2018/02/Kylie-Jenner-Pregnant-Baby-Getty-Man-Repeller-January-2018-631283350-copy-2-200x200.jpg",
+  },
+  {
+    name: "Jeff Bezos",
+    url: "https://m.media-amazon.com/images/M/MV5BYTNlOGZhYzgtMmE3OC00Y2NiLWFhNWQtNzg5MjRhNTJhZGVmXkEyXkFqcGdeQXVyNzg5MzIyOA@@._V1_UX200_CR0,0,200,200_AL_.jpg",
+  },
+  {
+    name: "Michael Jordan",
+    url: "https://static1.purepeople.com/people/6/24/26/@/539754-michael-jordan-200x200-2.jpg",
+  },
+  {
+    name: "Marc Cuban",
+    url: "https://cdn.britannica.com/cam/profile/d5e1e2a6-34d9-4fe8-8d17-f623db42cae5_1.jpeg?w=200&h=200",
+  },
+  {
     name: "Bill Gates",
     url: "https://bloximages.newyork1.vip.townnews.com/norfolkdailynews.com/content/tncms/assets/v3/editorial/9/fb/9fbe5a22-65fb-11ea-8c94-df40c04722d8/5e6ce2ab3a554.image.jpg?resize=200%2C200",
   },
