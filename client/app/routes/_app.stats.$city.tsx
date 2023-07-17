@@ -1,20 +1,19 @@
 import type { ActionArgs, LoaderArgs, TypedResponse } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import {
-  Outlet,
   isRouteErrorResponse,
   useLoaderData,
   useRouteError,
 } from "@remix-run/react";
 import type { AirspaceOption } from "~/components/AirspaceCard";
 import AirspaceCard from "~/components/AirspaceCard";
-import type { LeaderboardEntry } from "~/components/LeaderboardCard";
 import LeaderboardCard from "~/components/LeaderboardCard";
+import LeaderboardSmallCard from "~/components/LeaderboardSmallCard";
 
 type Stats = {
   location: AirspaceOption;
   totalLocationCO2KG: number;
-  leaderboardContent: LeaderboardEntry[];
+  leaderboardContent: CelebLeaderboard;
   serverstart: number;
 };
 
@@ -22,6 +21,17 @@ type AirspaceCarbonResponse = {
   airspace_name: string;
   total: number;
 };
+
+type CelebLeaderboardResponse = {
+  [key: string]: number;
+};
+
+export type CelebLeaderboardEntry = {
+  name: string;
+  emissionsInKg: number;
+};
+
+export type CelebLeaderboard = CelebLeaderboardEntry[];
 
 type ServerStart = {
   timestamp: number;
@@ -47,10 +57,10 @@ export async function loader({
   const totalCO2KgReponse = await fetch(
     `${API_URL}/${city?.toLowerCase()}/total`
   );
-
+  const celebLeaderboardResponse = await fetch(`${API_URL}/leaderboard`);
   const serverstartResponse = await fetch(`${API_URL}/serverstart`);
 
-  if (!totalCO2KgReponse) {
+  if (!totalCO2KgReponse || !celebLeaderboardResponse || !serverstartResponse) {
     throw new Response("Internal Server Error", {
       status: 500,
     });
@@ -58,20 +68,22 @@ export async function loader({
 
   const totalCO2Kg = (await totalCO2KgReponse.json()) as AirspaceCarbonResponse;
   const serverstart = (await serverstartResponse.json()) as ServerStart;
-  const { timestamp } = serverstart;
-  console.log(serverstart);
+  const { timestamp: serverstartTimestamp } = serverstart;
+
+  const celebLeaderboardObject =
+    (await celebLeaderboardResponse.json()) as CelebLeaderboardResponse;
+  const celebLeaderboard = Object.entries(
+    celebLeaderboardObject.celeb_emission
+  ).map(([name, emissions]) => ({
+    name,
+    emissionsInKg: emissions,
+  }));
 
   return json({
     location: city! as AirspaceOption,
     totalLocationCO2KG: totalCO2Kg.total,
-    serverstart: timestamp,
-    leaderboardContent: [
-      { placing: 1, name: "Elon Musk", kgCO2: 200 },
-      { placing: 2, name: "Taylor Swift", kgCO2: 190 },
-      { placing: 3, name: "Alan Sugar", kgCO2: 100 },
-      { placing: 4, name: "kenn ich nicht", kgCO2: 80 },
-      { placing: 5, name: "nicht echt", kgCO2: 1 },
-    ],
+    serverstart: serverstartTimestamp,
+    leaderboardContent: celebLeaderboard,
   });
 }
 
@@ -79,7 +91,6 @@ function Card() {
   const { location, totalLocationCO2KG, leaderboardContent, serverstart } =
     useLoaderData<typeof loader>();
 
-  console.log(serverstart);
   return (
     <div className="flex w-full flex-col gap-3 lg:w-3/4 xl:w-2/3">
       <AirspaceCard
@@ -89,6 +100,38 @@ function Card() {
       />
       <div className="h-px w-11/12 self-center bg-zinc-700/20"></div>
       <LeaderboardCard leaderboardContent={leaderboardContent} />
+      <div className="flex w-full items-center justify-center py-8">
+        <h1 className="relative min-h-[50px] w-fit text-center text-4xl font-bold text-sky-50">
+          Leaderboard
+          <svg
+            width="50"
+            height="50"
+            viewBox="0 0 50 50"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="absolute -right-16 -top-2"
+          >
+            <path
+              d="M8.33341 39.5833H16.6667V22.9167H8.33341V39.5833ZM20.8334 39.5833H29.1667V10.4167H20.8334V39.5833ZM33.3334 39.5833H41.6667V27.0833H33.3334V39.5833ZM4.16675 43.75V18.75H16.6667V6.25H33.3334V22.9167H45.8334V43.75H4.16675Z"
+              fill="#F0F9FF"
+            />
+          </svg>
+        </h1>
+      </div>
+      {leaderboardContent
+        .sort((a, b) => b.emissionsInKg - a.emissionsInKg)
+        .slice(3)
+        .map((leaderboardEntry, index) => {
+          if (leaderboardEntry.emissionsInKg > 0) {
+            return (
+              <LeaderboardSmallCard
+                celebLeaderboardEntry={leaderboardEntry}
+                placing={index + 4}
+                key={`${leaderboardEntry.name}-${leaderboardEntry.emissionsInKg}`}
+              />
+            );
+          }
+        })}
     </div>
   );
 }
