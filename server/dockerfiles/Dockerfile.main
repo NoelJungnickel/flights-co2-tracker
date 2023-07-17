@@ -7,4 +7,4 @@ RUN pip install -r requirements.txt
 
 COPY /src/ .
 
-ENTRYPOINT ["python", "main.py", "--db_host", "redis", "--db_port", "6379", "--accounts", "account_data.json"]
+ENTRYPOINT ["python", "main.py", "--db_host", "redis", "--db_port", "6379", "--accounts", "/config/account_data.json"]
