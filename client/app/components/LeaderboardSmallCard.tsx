@@ -1,4 +1,4 @@
-import { CelebLeaderboardEntry } from "~/routes/_app.stats.$city";
+import type { CelebLeaderboardEntry } from "~/routes/_app.stats.$city";
 import { celebPicturesURL } from "~/utils/celeb_pics_url";
 
 type Props = {

@@ -1,6 +1,6 @@
 import { celebPicturesURL } from "~/utils/celeb_pics_url";
 import CelebAvatar from "./CelebAvatar";
-import { CelebLeaderboard } from "~/routes/_app.stats.$city";
+import type { CelebLeaderboard } from "~/routes/_app.stats.$city";
 
 type Props = {
   leaderboardContent: CelebLeaderboard;
