@@ -79,6 +79,16 @@ class Database(ABC):
         """Stores the carbon emission value in an airspace at specific timestamp."""
         pass
 
+    @abstractmethod
+    def get_celeb_emissions(self) -> Dict[str, float]:
+        """Returns dictionary of celebs with their emission."""
+        pass
+
+    @abstractmethod
+    def set_celeb_emissions(self, celeb_emissions: Dict[str, float]) -> None:
+        """Stores carbon emission value of celebrities."""
+        pass
+
 
 class RedisDatabase(Database):
     """Implementation of database functions with a redis Database."""
@@ -146,3 +156,20 @@ class RedisDatabase(Database):
     def set_carbon_timestamp(self, airspace: str, dt: datetime, value: float) -> None:
         """Stores the carbon emission value in an airspace at specific timestamp."""
         self.redis.zadd(airspace, {str(dt.timestamp()): value})
+
+    def get_celeb_emissions(self) -> Dict[str, float]:
+        """Returns dictionary of celebs with their emission."""
+        celeb_data = self.redis.hgetall("celeb")
+        celeb_emissions = {
+            key.decode("utf-8"): float(value.decode("utf-8"))
+            for key, value in celeb_data.items()
+        }
+        return celeb_emissions
+
+    def set_celeb_emissions(self, celeb_emissions: Dict[str, float]) -> None:
+        """Stores carbon emission value of celebrities."""
+        encoded_emissions = {
+            key.encode("utf-8"): str(value).encode("utf-8")
+            for key, value in celeb_emissions.items()
+        }
+        self.redis.hmset("celeb", encoded_emissions)  # type: ignore

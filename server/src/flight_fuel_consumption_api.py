@@ -1,21 +1,17 @@
 import requests
-from typing import Optional, Tuple, Dict
+from typing import Optional, Dict
 
-def get_flight_fuel_consumption(
-    icao24_distance_list: list[Tuple[str, float]]
-) -> Optional[Dict]:
+
+def get_flight_fuel_consumption(icao24_distance: Dict[str, float]) -> Optional[Dict]:
     """Retrieves the fuel consumption of flights.
 
     Args:
-      icao24_distance_list (list): list of tuples containing an icao24 code
-        and their flight distance in nautical miles. (icao24_code, distance)
+        icao24_distance (Dict[str, float]): Dictionary containing icao24 codes
+            as key with their flight distance in nautical miles.
     """
-    icao24_list = map(lambda flight: flight[0], icao24_distance_list)
-    distance_list = map(lambda flight: flight[1], icao24_distance_list)
-
     url = (
-        f"https://despouy.ca/flight-fuel-api/q/?aircraft={','.join(icao24_list)}"
-        f"&distance={','.join(str(x) for x in distance_list)}"
+        f"https://despouy.ca/flight-fuel-api/q/?aircraft={','.join(icao24_distance.keys())}"
+        f"&distance={','.join(str(val) for val in icao24_distance.values())}"
     )
     try:
         response = requests.get(url, timeout=(10))

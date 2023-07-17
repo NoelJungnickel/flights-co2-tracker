@@ -73,6 +73,14 @@ class FastAPIWithDatabase:
                 data=self.db.get_carbon_sequence(airspace, begin, end),
             )
 
+        class CelebModel(BaseModel):
+            celeb_emission: Dict[str, float]
+
+        @self.app.get("/api/leaderboard", response_model=CelebModel)
+        async def get_celeb_emission() -> CelebModel:
+            """Return dictionary of celebs with their respective emission."""
+            return CelebModel(celeb_emission=self.db.get_celeb_emissions())
+
     def run(self) -> None:
         """Run the FastAPI application with given host and port."""
         uvicorn.run(self.app, host=self.host, port=self.port)
