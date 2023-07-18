@@ -10,7 +10,7 @@ import {
   type ChartOptions,
   type ChartData,
 } from "chart.js";
-import { CitiesData } from "~/routes/_app.stats.$city";
+import type { CitiesData } from "~/routes/_app.stats.$city";
 import { getChartProperties } from "~/utils/airspace_charting";
 import { capitalizeFirstLetter } from "./AirspaceDropdownButton";
 import { Line } from "react-chartjs-2";

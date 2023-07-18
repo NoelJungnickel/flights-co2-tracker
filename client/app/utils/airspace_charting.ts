@@ -1,4 +1,4 @@
-import { CitiesData } from "~/routes/_app.stats.$city";
+import type { CitiesData } from "~/routes/_app.stats.$city";
 
 // const data: {
 //   [city: string]: {
