@@ -69,8 +69,6 @@ function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
     };
   }, [totalCO2LocationKG, location]);
 
-  console.log(formatDate(serverstart));
-
   return (
     <div className="h-fit w-full rounded-lg bg-zinc-700 py-5">
       <div className="flex w-full justify-center gap-3 pb-6">
