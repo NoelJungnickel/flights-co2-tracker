@@ -10,9 +10,10 @@ import {
   type ChartOptions,
   type ChartData,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
 import { CitiesData } from "~/routes/_app.stats.$city";
+import { getChartProperties } from "~/utils/airspace_charting";
 import { capitalizeFirstLetter } from "./AirspaceDropdownButton";
+import { Line } from "react-chartjs-2";
 
 ChartJS.register(
   CategoryScale,
@@ -29,6 +30,11 @@ const CHART_FONT_COLOR = "#f0f9ff";
 const options: ChartOptions<"line"> = {
   scales: {
     y: {
+      title: {
+        color: CHART_FONT_COLOR,
+        display: true,
+        text: "CO2 in tons",
+      },
       ticks: {
         color: CHART_FONT_COLOR,
       },
@@ -58,19 +64,22 @@ type Props = {
 };
 
 function ChartCard({ citiesData }: Props) {
+  const chartProperties = getChartProperties(citiesData);
+
   const data: ChartData<"line"> = {
-    labels: ["January", "February", "March", "April", "May", "June", "July"],
-    datasets: Object.keys(citiesData).map((city) => {
-      const red = Math.floor(Math.random() * 255);
-      const green = Math.floor(Math.random() * 255);
-      const blue = Math.floor(Math.random() * 255);
-      return {
-        label: capitalizeFirstLetter(city),
-        data: Array.from({ length: 7 }, () => Math.floor(Math.random() * 10)),
-        borderColor: `rgb(${red}, ${green}, ${blue})`,
-        backgroundColor: `rgba(${red}, ${green}, ${blue}, 0.5)`,
-      };
+    labels: chartProperties.labels.map((timestamp) => {
+      return new Date(timestamp * 1000).toLocaleDateString("de-DE", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+      });
     }),
+    datasets: chartProperties.chartDatasets.map((dataset) => ({
+      label: capitalizeFirstLetter(dataset.label),
+      data: dataset.data,
+      borderColor: dataset.borderColor,
+      backgroundColor: dataset.backgroundColor,
+    })),
   };
 
   return (
