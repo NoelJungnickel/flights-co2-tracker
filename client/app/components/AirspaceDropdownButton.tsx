@@ -8,7 +8,8 @@ type Props = {
   onSelect: (option: AirspaceOption) => void;
 };
 
-function capitalizeFirstLetter(word: string) {
+// TODO: MOVE TO UTILS
+export function capitalizeFirstLetter(word: string) {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
