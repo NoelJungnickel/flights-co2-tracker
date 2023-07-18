@@ -47,8 +47,8 @@ type CitiesDataResponse = {
 };
 
 export type CitiesData = {
-  [key: string]: {
-    [key: string]: number;
+  [city: string]: {
+    [timestamp: string]: number;
   };
 };
 
@@ -110,14 +110,6 @@ export async function loader({
     acc[item.airspace_name] = item.data;
     return acc;
   }, {} as CitiesData);
-
-  // for (const city in citiesData) {
-  //   console.log(city);
-  //   const cityData = citiesData[city];
-  //   for (const emissionsData in cityData) {
-  //     console.log(`At ${emissionsData} was ${cityData[emissionsData]}`);
-  //   }
-  // }
 
   return json({
     location: city! as AirspaceOption,
@@ -201,7 +193,7 @@ export function ErrorBoundary() {
     );
   } else if (error instanceof Error) {
     return (
-      <div>
+      <div className="text-slate-300">
         <h1>Error</h1>
         <p>{error.message}</p>
         <p>The stack trace is:</p>
