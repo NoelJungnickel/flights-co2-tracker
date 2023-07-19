@@ -132,7 +132,7 @@ function Card() {
   console.log(citiesData);
 
   return (
-    <div className="flex w-full flex-col gap-3 lg:w-3/4 xl:w-2/3">
+    <div className="flex w-full flex-col gap-3 pt-6 lg:w-3/4 xl:w-2/3">
       <AirspaceCard
         serverstart={serverstart}
         location={location}
@@ -164,15 +164,17 @@ function Card() {
         .sort((a, b) => b.emissionsInKg - a.emissionsInKg)
         .slice(3)
         .map((leaderboardEntry, index) => {
-          if (leaderboardEntry.emissionsInKg > 0) {
-            return (
-              <LeaderboardSmallCard
-                celebLeaderboardEntry={leaderboardEntry}
-                placing={index + 4}
-                key={`${leaderboardEntry.name}-${leaderboardEntry.emissionsInKg}`}
-              />
-            );
+          if (leaderboardEntry.emissionsInKg <= 0) {
+            return null;
           }
+
+          return (
+            <LeaderboardSmallCard
+              celebLeaderboardEntry={leaderboardEntry}
+              placing={index + 4}
+              key={`${leaderboardEntry.name}-${leaderboardEntry.emissionsInKg}`}
+            />
+          );
         })}
     </div>
   );

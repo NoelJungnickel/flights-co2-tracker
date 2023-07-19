@@ -25,7 +25,7 @@ function LeaderboardSmallCard({ celebLeaderboardEntry, placing }: Props) {
           <img
             className="h-20 rounded-full border-2 border-white"
             src={celebPicture?.url}
-            alt={`${celebPicture?.name}'s picture`}
+            alt={`${celebPicture?.name}`}
           />
           <h1 className="self-center text-lg sm:text-2xl">
             {celebLeaderboardEntry.name}
