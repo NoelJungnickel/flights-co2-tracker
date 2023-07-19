@@ -10,7 +10,6 @@ metadata:
   name: api
 spec:
   type: LoadBalancer
-  loadBalancerIP: 35.210.64.77
   ports:
   - protocol: TCP
     port: 8000
