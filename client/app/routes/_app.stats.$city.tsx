@@ -6,7 +6,8 @@ import {
   useRouteError,
 } from "@remix-run/react";
 import type { AirspaceOption } from "~/components/AirspaceCard";
-import AirspaceCard from "~/components/AirspaceCard";
+import AirspaceCard, { airspaceOptions } from "~/components/AirspaceCard";
+import ChartCard from "~/components/ChartCard";
 import LeaderboardCard from "~/components/LeaderboardCard";
 import LeaderboardSmallCard from "~/components/LeaderboardSmallCard";
 
@@ -15,6 +16,7 @@ type Stats = {
   totalLocationCO2KG: number;
   leaderboardContent: CelebLeaderboard;
   serverstart: number;
+  citiesData: CitiesData;
 };
 
 type AirspaceCarbonResponse = {
@@ -36,6 +38,23 @@ export type CelebLeaderboard = CelebLeaderboardEntry[];
 type ServerStart = {
   timestamp: number;
 };
+
+type CitiesDataResponse = {
+  airspace_name: string;
+  data: {
+    [key: string]: number;
+  };
+};
+
+export type CitiesData = {
+  [city: string]: {
+    [timestamp: string]: number;
+  };
+};
+
+function decapitalizeFirstLetter(word: string) {
+  return word.charAt(0).toLowerCase() + word.slice(1);
+}
 
 export async function action({ request }: ActionArgs) {
   const body = await request.formData();
@@ -79,17 +98,38 @@ export async function loader({
     emissionsInKg: emissions,
   }));
 
+  const citiesDataPromises = airspaceOptions.map(async (city) => {
+    const response = await fetch(
+      `${API_URL}/${decapitalizeFirstLetter(city)}/data`
+    );
+    const data = (await response.json()) as CitiesDataResponse;
+    return data;
+  });
+  const citiesDataReponse = await Promise.all(citiesDataPromises);
+  const citiesData = citiesDataReponse.reduce((acc, item) => {
+    acc[item.airspace_name] = item.data;
+    return acc;
+  }, {} as CitiesData);
+
   return json({
     location: city! as AirspaceOption,
     totalLocationCO2KG: totalCO2Kg.total,
     serverstart: serverstartTimestamp,
     leaderboardContent: celebLeaderboard,
+    citiesData,
   });
 }
 
 function Card() {
-  const { location, totalLocationCO2KG, leaderboardContent, serverstart } =
-    useLoaderData<typeof loader>();
+  const {
+    location,
+    totalLocationCO2KG,
+    leaderboardContent,
+    serverstart,
+    citiesData,
+  } = useLoaderData<typeof loader>();
+
+  console.log(citiesData);
 
   return (
     <div className="flex w-full flex-col gap-3 lg:w-3/4 xl:w-2/3">
@@ -98,6 +138,8 @@ function Card() {
         location={location}
         totalCO2LocationKG={totalLocationCO2KG}
       />
+      <div className="h-px w-11/12 self-center bg-zinc-700/20"></div>
+      <ChartCard citiesData={citiesData} />
       <div className="h-px w-11/12 self-center bg-zinc-700/20"></div>
       <LeaderboardCard leaderboardContent={leaderboardContent} />
       <div className="flex w-full items-center justify-center py-8">
@@ -151,7 +193,7 @@ export function ErrorBoundary() {
     );
   } else if (error instanceof Error) {
     return (
-      <div>
+      <div className="text-slate-300">
         <h1>Error</h1>
         <p>{error.message}</p>
         <p>The stack trace is:</p>

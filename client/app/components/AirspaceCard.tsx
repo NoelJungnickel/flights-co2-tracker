@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AirspaceDropdownButton from "./AirspaceDropdownButton";
 
-const airspaceOptions = ["Berlin", "London", "Madrid", "Paris"] as const;
+export const airspaceOptions = ["Berlin", "London", "Madrid", "Paris"] as const;
 
 export type AirspaceOption = (typeof airspaceOptions)[number];
 
@@ -67,9 +67,7 @@ function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
     return () => {
       window.removeEventListener("unload", handleTabClosing);
     };
-  }, [totalCO2LocationKG]);
-
-  console.log(formatDate(serverstart));
+  }, [totalCO2LocationKG, location]);
 
   return (
     <div className="h-fit w-full rounded-lg bg-zinc-700 py-5">

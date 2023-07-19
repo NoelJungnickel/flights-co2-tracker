@@ -8,7 +8,8 @@ type Props = {
   onSelect: (option: AirspaceOption) => void;
 };
 
-function capitalizeFirstLetter(word: string) {
+// TODO: MOVE TO UTILS
+export function capitalizeFirstLetter(word: string) {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
@@ -87,8 +88,8 @@ function AirspaceDropdownButton({ options, defaultOption, onSelect }: Props) {
                 aria-label="select country"
                 className={`${
                   option === selectedOption
-                    ? "bg-sky-600 hover:bg-sky-600 hover:text-sky-50"
-                    : "hover:bg-gray-300 hover:text-gray-900"
+                    ? "bg-sky-700 hover:bg-sky-700 hover:text-sky-50"
+                    : "hover:bg-sky-600"
                 } block w-full rounded-md px-4 py-3 text-left text-sm text-sky-50`}
                 role="menuitem"
                 onClick={() => handleOptionSelect(option)}
