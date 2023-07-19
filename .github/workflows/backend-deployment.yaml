@@ -42,6 +42,11 @@ jobs:
         with:
           project_id: "${{ env.PROJECT_ID }}"
 
+      # Docker client configuration    
+      - name: Configure Docker Client
+        run: |-
+            gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
+
       # Build Docker Images and push to Google Container Registry
       - name: "Build and Push Docker Images"
         run: |
