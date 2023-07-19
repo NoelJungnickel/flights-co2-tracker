@@ -68,7 +68,7 @@ export async function loader({
   params,
 }: LoaderArgs): Promise<TypedResponse<Stats>> {
   const { city } = params;
-  let API_URL = `http://35.210.64.77:8000/api`;
+  let API_URL = `http://35.210.136.63:8000/api`;
   if (process.env.NODE_ENV === "development") {
     API_URL = `http://127.0.0.1:8000/api`;
   }

@@ -66,21 +66,23 @@ type Props = {
 function ChartCard({ citiesData }: Props) {
   const chartProperties = getChartProperties(citiesData);
 
-  const data: ChartData<"line"> = {
-    labels: chartProperties.labels.map((timestamp) => {
-      return new Date(timestamp * 1000).toLocaleDateString("de-DE", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "2-digit",
-      });
-    }),
-    datasets: chartProperties.chartDatasets.map((dataset) => ({
-      label: capitalizeFirstLetter(dataset.label),
-      data: dataset.data,
-      borderColor: dataset.borderColor,
-      backgroundColor: dataset.backgroundColor,
-    })),
-  };
+  const data: ChartData<"line"> | null = chartProperties
+    ? {
+        labels: chartProperties.labels.map((timestamp) => {
+          return new Date(timestamp * 1000).toLocaleDateString("de-DE", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "2-digit",
+          });
+        }),
+        datasets: chartProperties.chartDatasets.map((dataset) => ({
+          label: capitalizeFirstLetter(dataset.label),
+          data: dataset.data,
+          borderColor: dataset.borderColor,
+          backgroundColor: dataset.backgroundColor,
+        })),
+      }
+    : null;
 
   return (
     <div className="h-fit w-full rounded-lg bg-zinc-700 py-5">
@@ -90,7 +92,11 @@ function ChartCard({ citiesData }: Props) {
         </h1>
       </div>
       <div className="relative h-full w-full px-6 py-2 text-sky-50">
-        <Line options={options} data={data} />
+        {data ? (
+          <Line options={options} data={data} />
+        ) : (
+          <h1 className="pt-6 text-center text-3xl">No Data Yet</h1>
+        )}
       </div>
     </div>
   );
