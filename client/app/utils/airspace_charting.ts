@@ -160,7 +160,21 @@ function hashStringToRGB(str: string) {
   return [r, g, b];
 }
 
+function everyCityEmpty(citiesData: CitiesData) {
+  for (const city in citiesData) {
+    if (Object.keys(citiesData[city]).length !== 0) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function getChartProperties(citiesData: CitiesData) {
+  if (everyCityEmpty(citiesData)) {
+    return;
+  }
+
   const [sharedOldestTimestamp] = getSharedOldestAndLatestTimestamp(citiesData);
   const currentTimestamp = Math.floor(Date.now() / 1000);
 
