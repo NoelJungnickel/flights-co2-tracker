@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: api
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: api
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: api
+    spec:
+      containers:
+        - image: europe-west1-docker.pkg.dev/flights-co2-tracker-389215/docker-images/api:latest
+          imagePullPolicy: Always
+          name: api
+          ports:
+            - containerPort: 8000
+          resources: {}
+      restartPolicy: Always
+  revisionHistoryLimit: 1
+status: {}
