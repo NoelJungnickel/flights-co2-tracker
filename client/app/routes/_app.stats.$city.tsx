@@ -60,7 +60,6 @@ export async function action({ request }: ActionArgs) {
   const body = await request.formData();
   const data = Object.fromEntries(body);
   const { option } = data;
-  console.log(option);
   return redirect(`/stats/${option}`);
 }
 
@@ -69,9 +68,9 @@ export async function loader({
 }: LoaderArgs): Promise<TypedResponse<Stats>> {
   const { city } = params;
   let API_URL = `http://35.210.136.63:8000/api`;
-  if (process.env.NODE_ENV === "development") {
-    API_URL = `http://127.0.0.1:8000/api`;
-  }
+  // if (process.env.NODE_ENV === "development") {
+  //   API_URL = `http://127.0.0.1:8000/api`;
+  // }
 
   const totalCO2KgReponse = await fetch(
     `${API_URL}/${city?.toLowerCase()}/total`
@@ -128,8 +127,6 @@ function Card() {
     serverstart,
     citiesData,
   } = useLoaderData<typeof loader>();
-
-  console.log(citiesData);
 
   return (
     <div className="flex w-full flex-col gap-3 pt-6 lg:w-3/4 xl:w-2/3">

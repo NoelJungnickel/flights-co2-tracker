@@ -86,7 +86,7 @@ function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
           {Math.floor(totalCO2LocationKG / 1000)}
           <span className="text-xl md:text-5xl">t</span>
           <p className="block w-full pt-2 text-base font-normal text-sky-50 sm:hidden">
-            since serverstart {formatDate(serverstart)}
+            CO2 since serverstart {formatDate(serverstart)}
           </p>
         </div>
         <div className="w-1/2 py-5 text-center">
@@ -103,16 +103,16 @@ function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
           })()}
           <span className="text-xl md:text-5xl">t</span>
           <p className="block w-full pt-2 text-base font-normal text-sky-50 sm:hidden">
-            more since your last visit
+            CO2 more since your last visit
           </p>
         </div>
       </div>
       <div className="hidden w-full pt-4 text-center sm:flex">
         <p className="w-1/2 text-lg text-sky-50 md:text-xl">
-          since serverstart {formatDate(serverstart)}
+          CO2 since serverstart {formatDate(serverstart)}
         </p>
         <p className="w-1/2 text-lg text-sky-50 md:text-xl">
-          more since your last visit
+          CO2 more since your last visit
         </p>
       </div>
     </div>
