@@ -6,7 +6,7 @@ on:
       - main
 
     paths:
-      - 'server/**'
+      - "server/**"
   workflow_dispatch:
 
 jobs:
@@ -15,38 +15,35 @@ jobs:
   deployment:
     runs-on: ubuntu-latest
     needs: [testing]
-    
+
     # Set default working directory
     defaults:
-        run:
-          working-directory: ./server
+      run:
+        working-directory: ./server
 
     env:
-        PROJECT_ID: flights-co2-tracker-389215
+      PROJECT_ID: flights-co2-tracker-389215
+      GKE_CLUSTER: cost-optimized-cluster-1
+      GKE_ZONE: europe-west1-b
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Google cloud authentication
-      - id: 'auth'
-        uses: 'google-github-actions/auth@v1'
+      # Google cloud authentication for artifact registry
+      - id: "auth"
+        uses: "google-github-actions/auth@v1"
         with:
-          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-      
-      # Configuration of the Google Cloud SDK
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v1'
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+
+      # Configuration of the Google Cloud SDK for artifact registry
+      - name: "Set up Cloud SDK for artifact registry"
+        uses: "google-github-actions/setup-gcloud@v1"
         with:
-          project_id: '${{ env.PROJECT_ID }}'
-    
-      # Docker client configuration    
-      - name: Configure Docker Client
-        run: |-
-            gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
+          project_id: "${{ env.PROJECT_ID }}"
 
       # Build Docker Images and push to Google Container Registry
-      - name: 'Build and Push Docker Images'
+      - name: "Build and Push Docker Images"
         run: |
           docker build . -t main:latest -f dockerfiles/Dockerfile.main
           docker tag main:latest europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest
@@ -55,20 +52,15 @@ jobs:
           docker tag api:latest europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest
           docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest
 
-      # Deploy Docker images to Compute Engine
-      - name: Deploy to Compute Engine
-        run: |
-            gcloud compute instances update-container co2-flight-tracker \
-            --container-image europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest \
-            --zone europe-west1-b
+      # Get the GKE credentials
+      - uses: google-github-actions/get-gke-credentials@db150f2cc60d1716e61922b832eae71d2a45938f
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GKE_ZONE }}
 
-            gcloud compute instances update-container co2-flight-tracker \
-            --container-image europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest \
-            --container-arg="--db_host" \
-            --container-arg="redis" \
-            --container-arg="--db_port" \
-            --container-arg="6379" \
-            --container-arg="--accounts" \
-            --container-arg="${{ secrets.ACCOUNTS_CONFIG }}" \
-            --zone europe-west1-b
-        
+      # Deploy to the GKE cluster
+      - name: Deploy
+        run: |-
+          kubectl apply -f kubernetes-manifests/
+          kubectl rollout restart deployments/api
+          kubectl rollout restart deployments/main
