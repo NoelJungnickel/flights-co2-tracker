@@ -22,8 +22,7 @@ jobs:
         working-directory: ./server
 
     env:
-      PROJECT_ID_ARTIFACTS: flights-co2-tracker-389215
-      PROJECT_ID_CLUSTER: flights-co2-tracker-392819
+      PROJECT_ID: flights-co2-tracker-389215
       GKE_CLUSTER: cost-optimized-cluster-1
       GKE_ZONE: europe-west1-b
 
@@ -35,36 +34,25 @@ jobs:
       - id: "auth"
         uses: "google-github-actions/auth@v1"
         with:
-          credentials_json: "${{ secrets.GCP_CREDENTIALS_ARTIFACTS }}"
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
 
       # Configuration of the Google Cloud SDK for artifact registry
       - name: "Set up Cloud SDK for artifact registry"
         uses: "google-github-actions/setup-gcloud@v1"
         with:
-          project_id: "${{ env.PROJECT_ID_ARTIFACTS }}"
+          project_id: "${{ env.PROJECT_ID }}"
 
       # Build Docker Images and push to Google Container Registry
       - name: "Build and Push Docker Images"
         run: |
           docker build . -t main:latest -f dockerfiles/Dockerfile.main
-          docker tag main:latest europe-west1-docker.pkg.dev/${{ env.PROJECT_ID_ARTIFACTS }}/docker-images/main:latest
-          docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID_ARTIFACTS }}/docker-images/main:latest
+          docker tag main:latest europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest
+          docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/main:latest
           docker build . -t api:latest -f dockerfiles/Dockerfile.api
-          docker tag api:latest europe-west1-docker.pkg.dev/${{ env.PROJECT_ID_ARTIFACTS }}/docker-images/api:latest
-          docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID_ARTIFACTS }}/docker-images/api:latest
+          docker tag api:latest europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest
+          docker push europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/api:latest
 
-      # Google cloud authentication for gke cluster
-      - uses: "google-github-actions/auth@v1"
-        with:
-          credentials_json: "${{ secrets.GCP_CREDENTIALS_CLUSTER }}"
-
-      # Change to project containing gke cluster
-      - name: "Set up Cloud SDK for gke cluster"
-        uses: "google-github-actions/setup-gcloud@v1"
-        with:
-          project_id: "${{ env.PROJECT_ID_CLUSTER }}"      
-
-      # Get the GKE credentials so we can deploy to the cluster
+      # Get the GKE credentials
       - uses: google-github-actions/get-gke-credentials@db150f2cc60d1716e61922b832eae71d2a45938f
         with:
           cluster_name: ${{ env.GKE_CLUSTER }}

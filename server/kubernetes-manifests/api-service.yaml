@@ -10,9 +10,10 @@ metadata:
   name: api
 spec:
   type: LoadBalancer
+  loadBalancerIP: 35.210.64.77
   ports:
   - protocol: TCP
-    port: 60000
+    port: 8000
     targetPort: 8000
   selector:
     io.kompose.service: api
