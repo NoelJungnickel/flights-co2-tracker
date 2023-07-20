@@ -73,7 +73,7 @@ const Accordion = ({ items }: Props) => {
                   <div className="flex gap-4">
                     {item.links.map((link) => (
                       <small className="pt-4 hover:cursor-pointer hover:underline">
-                        <a target="_blank" href={link.link}>
+                        <a target="_blank" href={link.link} rel="noreferrer">
                           {link.title}
                         </a>
                       </small>

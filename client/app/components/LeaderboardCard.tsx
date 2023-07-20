@@ -39,6 +39,7 @@ function LeaderboardCard({ leaderboardContent }: Props) {
                   href={`https://en.wikipedia.org/wiki/${celeb.name
                     .trim()
                     .replace("", "_")}`}
+                  rel="noreferrer"
                 >
                   <CelebAvatar
                     name={celeb.name}

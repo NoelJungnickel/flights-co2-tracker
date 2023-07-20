@@ -7,6 +7,7 @@ function Footer() {
           href="https://cloud.google.com/"
           target="_blank"
           className="text-zinc-400 hover:underline"
+          rel="noreferrer"
         >
           Google Cloud
         </a>
@@ -15,6 +16,7 @@ function Footer() {
           href="https://opensky-network.org/"
           target="_blank"
           className=" text-zinc-400 hover:underline"
+          rel="noreferrer"
         >
           OpenSky
         </a>
@@ -23,6 +25,7 @@ function Footer() {
           href="https://remix.run/"
           target="_blank"
           className="text-zinc-400 hover:underline"
+          rel="noreferrer"
         >
           Remix
         </a>
@@ -31,6 +34,7 @@ function Footer() {
           target="_blank"
           href="https://vercel.com/"
           className="text-zinc-400 hover:underline"
+          rel="noreferrer"
         >
           Vercel
         </a>{" "}
@@ -39,6 +43,7 @@ function Footer() {
           target="_blank"
           href="https://github.com/AryehSchoefer"
           className="text-zinc-400 hover:underline"
+          rel="noreferrer"
         >
           Aryeh
         </a>
@@ -47,6 +52,7 @@ function Footer() {
           target="_blank"
           href="https://github.com/NulliBulli"
           className="text-zinc-400 hover:underline"
+          rel="noreferrer"
         >
           Noel
         </a>
@@ -55,6 +61,7 @@ function Footer() {
           target="_blank"
           href="https://github.com/kilianp14"
           className="text-zinc-400 hover:underline"
+          rel="noreferrer"
         >
           Paul
         </a>
@@ -63,6 +70,7 @@ function Footer() {
           target="_blank"
           href="https://github.com/swinarga"
           className="text-zinc-400 hover:underline"
+          rel="noreferrer"
         >
           Satya
         </a>

@@ -1,4 +1,5 @@
-import Accordion, { AccordionItem } from "~/components/Accordion";
+import type { AccordionItem } from "~/components/Accordion";
+import Accordion from "~/components/Accordion";
 
 function Faq() {
   const questions: AccordionItem[] = [

@@ -18,6 +18,7 @@ function LeaderboardSmallCard({ celebLeaderboardEntry, placing }: Props) {
         .trim()
         .replace(" ", "_")}`}
       className="hover:cursor-pointer"
+      rel="noreferrer"
     >
       <div className="flex justify-center font-normal text-blue-50">
         <div className="flex w-full items-center justify-between divide-x-2 divide-zinc-800/30 rounded-lg bg-zinc-700 py-2 text-xl hover:translate-x-1 sm:w-11/12">
