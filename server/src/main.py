@@ -309,10 +309,14 @@ def update_celeb_emission_job(
     start = end - timedelta(days=30)
 
     celeb_emissions = {}
+    old_celeb_emissions = db.get_celeb_emissions()
     for celeb, icaos in celeb_aircrafts.items():
         icao24_distance = {}
         for icao in icaos:
             res = get_flights_by_aircrafts(icao, start, end)
+
+            if len(res) == 0:
+                continue
             # Compute distance from time in air by assuming constant velocity of 700 km/h
             # This could be much improved by computing the distance between estimated
             # start and destination airport given by opensky, but we lack a free api for
@@ -326,6 +330,19 @@ def update_celeb_emission_job(
             )
             icao24_distance[icao] = distance
         carbon = get_carbon_by_distance(icao24_distance)
+
+        # use old emission if no new emission was computed
+        if (
+            carbon == 0.0
+            and old_celeb_emissions.get(celeb)
+            and old_celeb_emissions[celeb] > 0.0
+        ):
+            print(
+                f"Using old emission for {celeb}: {old_celeb_emissions.get(celeb)}",
+                flush=True,
+            )
+            carbon = old_celeb_emissions[celeb]
+
         celeb_emissions[celeb] = carbon
         print(f"Emission by {celeb}: {carbon}", flush=True)
     db.set_celeb_emissions(celeb_emissions)
