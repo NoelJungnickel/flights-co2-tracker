@@ -6,7 +6,7 @@ type Props = {
 };
 
 function CelebAvatar({ imgUrl, name, border = true, placing }: Props) {
-  const dimensionUtilityClasses = `relative self-center ${
+  const dimensionUtilityClasses = `hover:-translate-y-0.5 relative self-center ${
     placing !== 1 ? "h-44 w-44" : "h-52 w-52"
   }`;
 

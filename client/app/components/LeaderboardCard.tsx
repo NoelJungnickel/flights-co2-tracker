@@ -34,26 +34,27 @@ function LeaderboardCard({ leaderboardContent }: Props) {
                   index === 1 ? "sm:order-overwrite-first" : ""
                 } flex flex-col justify-end`}
               >
-                <CelebAvatar
-                  name={celeb.name}
-                  imgUrl={celebPicture?.url}
-                  placing={index + 1}
-                />
-                <div className="flex flex-col gap-2 pt-8">
-                  <a
-                    target="_blank"
-                    href={`https://en.wikipedia.org/wiki/${celeb.name
-                      .trim()
-                      .replace("", "_")}`}
-                    className="text-center text-xl font-bold text-blue-50 hover:cursor-pointer"
-                  >
-                    {celeb.name}
-                  </a>
-                  <h2 className="text-center text-xl font-bold text-slate-300">
-                    {Math.floor(celeb.emissionsInKg / 1000)}
-                    <span className="text-sm">t</span>
-                  </h2>
-                </div>
+                <a
+                  target="_blank"
+                  href={`https://en.wikipedia.org/wiki/${celeb.name
+                    .trim()
+                    .replace("", "_")}`}
+                >
+                  <CelebAvatar
+                    name={celeb.name}
+                    imgUrl={celebPicture?.url}
+                    placing={index + 1}
+                  />
+                  <div className="flex flex-col gap-2 pt-8">
+                    <h1 className="text-center text-xl font-bold text-blue-50 hover:cursor-pointer">
+                      {celeb.name}
+                    </h1>
+                    <h2 className="text-center text-xl font-bold text-slate-300">
+                      {Math.floor(celeb.emissionsInKg / 1000)}
+                      <span className="text-sm">t</span>
+                    </h2>
+                  </div>
+                </a>
               </div>
             );
           })}
