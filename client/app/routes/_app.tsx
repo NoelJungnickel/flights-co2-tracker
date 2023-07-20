@@ -1,8 +1,10 @@
 import { Outlet, type V2_MetaFunction } from "@remix-run/react";
+import Footer from "~/components/Footer";
+import Header from "~/components/Header";
 
 export const meta: V2_MetaFunction = () => {
   return [
-    { title: "Flight CO2 Tracker" },
+    { title: "Flights CO2 Tracker" },
     {
       name: "description",
       content: "Interesting data about CO2 emissions caused by flights!",
@@ -12,11 +14,15 @@ export const meta: V2_MetaFunction = () => {
 
 function Stats() {
   return (
-    <div className="flex max-h-fit min-h-screen justify-center bg-zinc-800 font-poppins">
-      <div className="flex w-full justify-center py-4">
-        <Outlet />
+    <>
+      <Header />
+      <div className="flex max-h-fit min-h-screen justify-center bg-zinc-800 font-poppins">
+        <div className="flex w-full justify-center py-4">
+          <Outlet />
+        </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }
 
