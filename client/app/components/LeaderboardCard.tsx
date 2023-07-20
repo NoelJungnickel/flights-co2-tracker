@@ -41,6 +41,7 @@ function LeaderboardCard({ leaderboardContent }: Props) {
                 />
                 <div className="flex flex-col gap-2 pt-8">
                   <a
+                    target="_blank"
                     href={`https://en.wikipedia.org/wiki/${celeb.name
                       .trim()
                       .replace("", "_")}`}
