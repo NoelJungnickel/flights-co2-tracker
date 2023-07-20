@@ -1,6 +1,6 @@
 function Footer() {
   return (
-    <div className="flex w-full items-center justify-center bg-zinc-800 pb-4 font-poppins text-slate-200">
+    <div className="flex w-full items-center justify-center bg-zinc-800 pb-4 text-center font-poppins text-slate-200">
       <small>
         Powered by{" "}
         <a
