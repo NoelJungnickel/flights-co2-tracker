@@ -8,6 +8,7 @@ import {
 import type { AirspaceOption } from "~/components/AirspaceCard";
 import AirspaceCard, { airspaceOptions } from "~/components/AirspaceCard";
 import ChartCard from "~/components/ChartCard";
+import Header from "~/components/Header";
 import LeaderboardCard from "~/components/LeaderboardCard";
 import LeaderboardSmallCard from "~/components/LeaderboardSmallCard";
 
@@ -129,7 +130,7 @@ function Card() {
   } = useLoaderData<typeof loader>();
 
   return (
-    <div className="flex w-full flex-col gap-3 pt-6 lg:w-3/4 xl:w-2/3">
+    <div className="flex w-full flex-col gap-3 lg:w-3/4 xl:w-2/3">
       <AirspaceCard
         serverstart={serverstart}
         location={location}
