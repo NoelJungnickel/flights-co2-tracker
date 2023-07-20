@@ -61,7 +61,7 @@ const Accordion = ({ items }: Props) => {
             </span>
           </div>
           {activeIndex === index && (
-            <div className="rounded-b-lg border-x-2 border-b-2 border-zinc-700 bg-zinc-800 p-4">
+            <div className="whitespace-pre-line rounded-b-lg border-x-2 border-b-2 border-zinc-700 bg-zinc-800 p-4">
               {item.content}
             </div>
           )}

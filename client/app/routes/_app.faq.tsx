@@ -16,7 +16,8 @@ function Faq() {
     },
     {
       title: "How often does the data update?",
-      content: "Content of Section 2",
+      content:
+        "Airspace stats are updated every minute.\nAirspace chart is updated hourly.\nCelebrity leaderboard is updated daily.",
     },
     {
       title: "How does the data compare?",
