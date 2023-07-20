@@ -25,7 +25,7 @@ const Accordion = ({ items }: Props) => {
     <div className="w-full">
       {items.map((item, index) => (
         <div
-          key={index}
+          key={`${index} ${item.title}`}
           className="mb-6 rounded-b-lg rounded-t-lg bg-zinc-700 text-slate-200 hover:bg-zinc-600/75"
         >
           <div
@@ -42,9 +42,9 @@ const Accordion = ({ items }: Props) => {
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
                   <polyline points="18 15 12 9 6 15"></polyline>
                 </svg>
@@ -56,9 +56,9 @@ const Accordion = ({ items }: Props) => {
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
@@ -72,7 +72,10 @@ const Accordion = ({ items }: Props) => {
                 {item.links && (
                   <div className="flex gap-4">
                     {item.links.map((link) => (
-                      <small className="pt-4 hover:cursor-pointer hover:underline">
+                      <small
+                        key={`${link.link} ${link.title}`}
+                        className="pt-4 hover:cursor-pointer hover:underline"
+                      >
                         <a target="_blank" href={link.link} rel="noreferrer">
                           {link.title}
                         </a>
