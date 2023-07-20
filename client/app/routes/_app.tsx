@@ -1,4 +1,5 @@
 import { Outlet, type V2_MetaFunction } from "@remix-run/react";
+import Footer from "~/components/Footer";
 import Header from "~/components/Header";
 
 export const meta: V2_MetaFunction = () => {
@@ -20,6 +21,7 @@ function Stats() {
           <Outlet />
         </div>
       </div>
+      <Footer />
     </>
   );
 }
