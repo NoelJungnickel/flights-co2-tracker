@@ -40,9 +40,14 @@ function LeaderboardCard({ leaderboardContent }: Props) {
                   placing={index + 1}
                 />
                 <div className="flex flex-col gap-2 pt-8">
-                  <h1 className="text-center text-xl font-bold text-blue-50">
+                  <a
+                    href={`https://en.wikipedia.org/wiki/${celeb.name
+                      .trim()
+                      .replace("", "_")}`}
+                    className="text-center text-xl font-bold text-blue-50 hover:cursor-pointer"
+                  >
                     {celeb.name}
-                  </h1>
+                  </a>
                   <h2 className="text-center text-xl font-bold text-slate-300">
                     {Math.floor(celeb.emissionsInKg / 1000)}
                     <span className="text-sm">t</span>
