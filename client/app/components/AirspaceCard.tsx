@@ -63,9 +63,9 @@ function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
 
     setLastVisitLocationCO2KG(localCo2LastVisitKG);
 
-    window.addEventListener("unload", handleTabClosing);
+    window.addEventListener("pagehide", handleTabClosing);
     return () => {
-      window.removeEventListener("unload", handleTabClosing);
+      window.removeEventListener("pagehide", handleTabClosing);
     };
   }, [totalCO2LocationKG, location]);
 
@@ -79,6 +79,8 @@ function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
           options={[...airspaceOptions]}
           defaultOption={location}
           onSelect={(option) => console.log(option)}
+          currentLocation={location}
+          currentTotalCO2LocationKG={totalCO2LocationKG}
         />
       </div>
       <div className="flex flex-col items-center divide-y divide-zinc-800/30 text-6xl font-bold text-sky-50 sm:flex-row sm:divide-x sm:divide-y-0 md:text-8xl">
@@ -86,7 +88,7 @@ function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
           {Math.floor(totalCO2LocationKG / 1000)}
           <span className="text-xl md:text-5xl">t</span>
           <p className="block w-full pt-2 text-base font-normal text-sky-50 sm:hidden">
-            CO2 since serverstart {formatDate(serverstart)}
+            CO<sub>2</sub> since serverstart {formatDate(serverstart)}
           </p>
         </div>
         <div className="w-1/2 py-5 text-center">
@@ -103,16 +105,16 @@ function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
           })()}
           <span className="text-xl md:text-5xl">t</span>
           <p className="block w-full pt-2 text-base font-normal text-sky-50 sm:hidden">
-            CO2 more since your last visit
+            CO<sub>2</sub> more since your last visit
           </p>
         </div>
       </div>
       <div className="hidden w-full pt-4 text-center sm:flex">
         <p className="w-1/2 text-lg text-sky-50 md:text-xl">
-          CO2 since serverstart {formatDate(serverstart)}
+          CO<sub>2</sub> since serverstart {formatDate(serverstart)}
         </p>
         <p className="w-1/2 text-lg text-sky-50 md:text-xl">
-          CO2 more since your last visit
+          CO<sub>2</sub> more since your last visit
         </p>
       </div>
     </div>

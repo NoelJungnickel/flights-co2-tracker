@@ -65,6 +65,16 @@ type Props = {
 
 function ChartCard({ citiesData }: Props) {
   const chartProperties = getChartProperties(citiesData);
+  chartProperties?.chartDatasets.forEach((dataset) => {
+    const dataValues = dataset.data;
+    dataset.data = dataValues.map((val, i) => {
+      if (i === 0) {
+        return val;
+      }
+
+      return val - dataValues[i - 1];
+    });
+  });
 
   const data: ChartData<"line"> | null = chartProperties
     ? {
