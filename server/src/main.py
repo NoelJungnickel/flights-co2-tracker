@@ -107,7 +107,8 @@ def main() -> None:
     db.set_airspaces(BOUNDING_BOXES)
 
     # Save current time as server startup time
-    db.set_server_startup_time(datetime.now())
+    if db.get_server_startup_time() == 0:
+        db.set_server_startup_time(datetime.now())
 
     # Initialize worker threads for computation
     worker_threads = create_carbon_computer_workers(
