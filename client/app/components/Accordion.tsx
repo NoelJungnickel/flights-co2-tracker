@@ -1,8 +1,9 @@
 import { useState } from "react";
 
-type AccordionItem = {
+export type AccordionItem = {
   title: string;
   content: string;
+  links?: { title: string; link: string }[];
 };
 
 type Props = {
@@ -10,10 +11,14 @@ type Props = {
 };
 
 const Accordion = ({ items }: Props) => {
-  const [activeIndex, setActiveIndex] = useState<null | number>(null);
+  const [activeIndices, setActiveIndices] = useState<number[]>([]);
 
   const handleToggle = (index: number) => {
-    setActiveIndex(index === activeIndex ? null : index);
+    setActiveIndices((prevIndices) =>
+      prevIndices.includes(index)
+        ? prevIndices.filter((i) => i !== index)
+        : [...prevIndices, index]
+    );
   };
 
   return (
@@ -29,7 +34,7 @@ const Accordion = ({ items }: Props) => {
           >
             <span>{item.title}</span>
             <span>
-              {activeIndex === index ? (
+              {activeIndices.includes(index) ? (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -60,10 +65,23 @@ const Accordion = ({ items }: Props) => {
               )}
             </span>
           </div>
-          {activeIndex === index && (
-            <div className="whitespace-pre-line rounded-b-lg border-x-2 border-b-2 border-zinc-700 bg-zinc-800 p-4">
-              {item.content}
-            </div>
+          {activeIndices.includes(index) && (
+            <>
+              <div className="whitespace-pre-line rounded-b-lg border-x-2 border-b-2 border-zinc-700 bg-zinc-800 p-4">
+                {item.content}
+                {item.links && (
+                  <div className="flex gap-4">
+                    {item.links.map((link) => (
+                      <small className="pt-4 hover:cursor-pointer hover:underline">
+                        <a target="_blank" href={link.link}>
+                          {link.title}
+                        </a>
+                      </small>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       ))}
