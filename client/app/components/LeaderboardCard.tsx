@@ -32,7 +32,7 @@ function LeaderboardCard({ leaderboardContent }: Props) {
                 key={celeb.name}
                 className={`${
                   index === 1 ? "sm:order-overwrite-first" : ""
-                } flex flex-col justify-end`}
+                } flex flex-col items-center justify-end`}
               >
                 <a
                   target="_blank"
