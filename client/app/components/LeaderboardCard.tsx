@@ -15,7 +15,7 @@ function LeaderboardCard({ leaderboardContent }: Props) {
     <div className="h-fit w-full rounded-lg bg-zinc-700 py-5">
       <div className="flex w-full flex-col justify-center gap-3 pb-6">
         <h1 className="px-1 pb-6 text-center text-4xl font-bold text-sky-50">
-          Top 3 CO2 Emitters of the Last 30 Days
+          Top CO<sub>2</sub> Emitters of the Last 30 Days
         </h1>
         <div className="flex w-full flex-col justify-center gap-10 sm:flex-row sm:gap-6 md:gap-20">
           {[
