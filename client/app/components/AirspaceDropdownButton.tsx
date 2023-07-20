@@ -5,6 +5,8 @@ import { Form, useSubmit } from "@remix-run/react";
 type Props = {
   options: AirspaceOption[];
   defaultOption: AirspaceOption;
+  currentLocation: string;
+  currentTotalCO2LocationKG: number;
   onSelect: (option: AirspaceOption) => void;
 };
 
@@ -13,7 +15,13 @@ export function capitalizeFirstLetter(word: string) {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
-function AirspaceDropdownButton({ options, defaultOption, onSelect }: Props) {
+function AirspaceDropdownButton({
+  options,
+  defaultOption,
+  currentLocation,
+  currentTotalCO2LocationKG,
+  onSelect,
+}: Props) {
   const submit = useSubmit();
   const [selectedOption, setSelectedOption] = useState(
     capitalizeFirstLetter(defaultOption)
@@ -22,6 +30,11 @@ function AirspaceDropdownButton({ options, defaultOption, onSelect }: Props) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleOptionSelect = (option: AirspaceOption) => {
+    window.localStorage.setItem(
+      `CO2_KG_LAST_VISIT_STORAGE_KEY_${currentLocation.toUpperCase()}`,
+      currentTotalCO2LocationKG.toString()
+    );
+
     setSelectedOption(option);
     onSelect(option);
     setIsOpen(false);
