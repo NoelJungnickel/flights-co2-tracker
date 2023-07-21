@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import AirspaceDropdownButton from "./AirspaceDropdownButton";
+import LoadingSpinner from "./LoadingSpinner";
+import { useNavigation } from "@remix-run/react";
 
 export const airspaceOptions = ["Berlin", "London", "Madrid", "Paris"] as const;
 
@@ -43,6 +45,9 @@ function formatDate(unixTime: number) {
 
 function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
   const [lastVisitLocationCO2KG, setLastVisitLocationCO2KG] = useState(0);
+  const { state: navigationState } = useNavigation();
+  const isSubmitting =
+    navigationState === "submitting" || navigationState === "loading";
 
   useEffect(() => {
     const handleTabClosing = () => {
@@ -85,25 +90,41 @@ function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
       </div>
       <div className="flex flex-col items-center divide-y divide-zinc-800/30 text-6xl font-bold text-sky-50 sm:flex-row sm:divide-x sm:divide-y-0 md:text-8xl">
         <div className="w-1/2 py-5 text-center">
-          {Math.floor(totalCO2LocationKG / 1000)}
-          <span className="text-xl md:text-5xl">t</span>
+          {!isSubmitting ? (
+            <>
+              {Math.floor(totalCO2LocationKG / 1000)}
+              <span className="text-xl md:text-5xl">t</span>
+            </>
+          ) : (
+            <div className="flex justify-center py-1.5 sm:py-6">
+              <LoadingSpinner />
+            </div>
+          )}
           <p className="block w-full pt-2 text-base font-normal text-sky-50 sm:hidden">
             CO<sub>2</sub> since serverstart {formatDate(serverstart)}
           </p>
         </div>
         <div className="w-1/2 py-5 text-center">
-          {(() => {
-            const now = Math.floor(totalCO2LocationKG / 1000);
-            const lastTime = Math.floor(lastVisitLocationCO2KG / 1000);
-            const difference = now - lastTime;
+          {!isSubmitting ? (
+            <>
+              {(() => {
+                const now = Math.floor(totalCO2LocationKG / 1000);
+                const lastTime = Math.floor(lastVisitLocationCO2KG / 1000);
+                const difference = now - lastTime;
 
-            if (difference < 0) {
-              return 0;
-            }
+                if (difference < 0) {
+                  return 0;
+                }
 
-            return difference === now ? 0 : difference;
-          })()}
-          <span className="text-xl md:text-5xl">t</span>
+                return difference === now ? 0 : difference;
+              })()}
+              <span className="text-xl md:text-5xl">t</span>
+            </>
+          ) : (
+            <div className="flex justify-center py-1.5 sm:py-6">
+              <LoadingSpinner />
+            </div>
+          )}
           <p className="block w-full pt-2 text-base font-normal text-sky-50 sm:hidden">
             CO<sub>2</sub> more since your last visit
           </p>
