@@ -76,9 +76,9 @@ function AirspaceCard({ location, totalCO2LocationKG, serverstart }: Props) {
 
   return (
     <div className="h-fit w-full rounded-lg bg-zinc-700 py-5">
-      <div className="flex w-full justify-center gap-3 pb-6">
-        <h1 className="text-center text-3xl font-bold text-sky-50">
-          Airspace Stats
+      <div className="flex w-full flex-col items-center justify-center gap-3 px-2 pb-6 sm:flex-row">
+        <h1 className="text-center text-2xl font-bold text-sky-50 md:text-3xl">
+          Total CO<sub>2</sub> Emissions of Planes in Selected Airspace
         </h1>
         <AirspaceDropdownButton
           options={[...airspaceOptions]}
