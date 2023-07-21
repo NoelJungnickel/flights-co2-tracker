@@ -7,10 +7,10 @@ Please note that the provided carbon data is based on assumptions and approximat
 
 ## Features
 
-- **Real-time Data**: The dashboard fetches real-time air traffic data using the OpenSky API, enabling you to stay up-to-date with the latest carbon emissions information.
+- **Real-Time Data**: The dashboard fetches real-time air traffic data using the OpenSky API, enabling you to stay up-to-date with the latest carbon emissions information.
 - **Data Visualizations**: The application contains Graphs, illustrating carbon emissions from different airspaces over time.
 - **Responsive Design**: The web page is accessible by any device with a web browser and looks great even for small devices.
 
 ## Technologies and Deployment
 To view the dashboard, just visit `https://flights-co2-tracker.vercel.app/` and see the latest carbon data.\
-You can find he neccessary information on how to deploy the service locally on your machine, on the technology stack that has been used, and the code structure in the README.md files in the client/server directories in this GitHub Repository.
+You can find the neccessary information on how to deploy the service locally on your machine, on the technology stack that has been used, and the code structure in the README.md files in the client/server directories in this GitHub Repository.
