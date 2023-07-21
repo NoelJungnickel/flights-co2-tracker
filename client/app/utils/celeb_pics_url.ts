@@ -103,4 +103,8 @@ export const celebPicturesURL = [
     name: "Ralph Lauren",
     url: "https://media-thumbs.golden.com/yz8vc-QcsTpHlZYHxhUySJhY2-8=/200x200/smart/golden-storage-production.s3.amazonaws.com%2Ftopic_images%2F6b5a5a825af94afeb4cddc273a9a2cc2.png",
   },
+  {
+    name: "Mark Zuckerberg",
+    url: "https://media.wired.com/photos/592676467034dc5f91beb80e/1:1/w_200,h_200,c_limit/MarkZuckerberg.jpg",
+  },
 ];

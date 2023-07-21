@@ -45,6 +45,7 @@ CELEB_AIRCRAFTS = {
     "Donald Trump": ["AA3410"],
     "Jerry Seinfeld": ["A9FF1E"],
     "Nancy Walton Laurie": ["A67552"],
+    "Mark Zuckerberg": ["A9247D"],
 }
 
 
