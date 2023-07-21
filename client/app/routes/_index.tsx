@@ -19,7 +19,7 @@ export default function Index() {
     <div className="flex h-screen justify-center bg-blue-200">
       <div className="flex w-3/4 py-4">
         <h1 className="text-3xl text-white dark:text-black">
-          Redirecting to "/stats"...
+          Redirecting to "/stats/berlin"...
         </h1>
       </div>
     </div>

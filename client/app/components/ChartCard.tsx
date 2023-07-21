@@ -52,6 +52,12 @@ const options: ChartOptions<"line"> = {
   plugins: {
     legend: {
       position: "bottom" as const,
+      onHover: (event) => {
+        (event?.native?.target as HTMLElement).style.cursor = "pointer";
+      },
+      onLeave: (event) => {
+        (event?.native?.target as HTMLElement).style.cursor = "auto";
+      },
     },
     title: {
       display: true,
@@ -98,7 +104,7 @@ function ChartCard({ citiesData }: Props) {
     <div className="h-fit w-full rounded-lg bg-zinc-700 py-5">
       <div className="flex w-full justify-center gap-3">
         <h1 className="text-center text-3xl font-bold text-sky-50">
-          Airspace Chart
+          Daily CO<sub>2</sub> Emissions of Planes in Airspaces
         </h1>
       </div>
       <div className="relative h-full w-full px-6 py-2 text-sky-50">

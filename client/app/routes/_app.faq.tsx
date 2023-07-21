@@ -19,9 +19,14 @@ function Faq() {
         "Many estimations and assumptions are made (airplanes leave the airspace in a straight path, a constant speed of 700 km/h is assumed for distance calculations with Celebs, fuel consumption is estimated based on the aircraft type, etc.). Therefore, there is no guarantee of the correctness and accuracy of the data.\nThe calculation process involves obtaining state vectors, which are then used to calculate aircraft flight paths. Subsequently, the CO2 emissions are estimated based on the aircraft type, utilizing the Flight Fuel Consumption API.",
     },
     {
+      title: "How were the celebrities selected for the leaderboard?",
+      content:
+        "The celebrities are hand-picked based on articles about private jet usage of celebrities. The placings on the celebrity leaderboard are relative and not based on an absolute value, as they are derived from a hand-picked selection of celebrities rather than being compared to all celebrities worldwide.",
+    },
+    {
       title: "How often does the data update?",
       content:
-        "The data updates at specific intervals as follows:\n- Airspace statistics are refreshed every minute.\n- The airspace chart is updated on an hourly basis.\n- The celebrity leaderboard is updated daily.",
+        "The data updates at specific intervals as follows:\n- Airspace statistics are refreshed every minute.\n- The airspace chart and the celebrity leaderboard is updated on an hourly basis.",
     },
     {
       title: "How does the data compare?",
