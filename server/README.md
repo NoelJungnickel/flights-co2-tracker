@@ -1,6 +1,6 @@
-# Flight Tracker Python Backend
+# Flights-CO2-Tracker Python Backend
 
-This directory contains the backend on the Flight CO2 Tracker and is designed to be hosted in the cloud. The backend is currently hosted at `http://35.210.64.77:8000` in a GCP Virtual Machine.
+This directory contains the backend on the Flight CO2 Tracker and is designed to be hosted in the cloud. The backend is currently hosted at `http://35.210.136.63:8000/` as a Google Kubernetes Cluster.\
 For retrieving flight data, we use the real-time data provided by the Opensky Network: `https://opensky-network.org`
 Detailed information about them can be found on their website and in the original OpenSky paper.
 ```
@@ -18,7 +18,7 @@ The Backend consists of the following python files:
 - `database.py`: Provides an abstract class `Database` that defines the required functions for interacting with the carbon emission data storage. The `RedisDatabase` class implements these functions using Redis as the storage backend.
 - `opensky_network.py`: Contains functions to fetch aircraft states and flight data from the OpenSky Network API.
 - `flight_fuel_consumption_api.py` Provides a function to query the Flight Fuel Consumption API and retrieve the fuel consumption data for flights given specific aircraft data.
-- `carbon_computation.py`: Contains the `StateCarbonComputation` class, which calculates the total carbon emissions in a specific airspace based on aircraft states. It maintains airspace data with state vectors and computes the distance traveled by each aircraft after receiving a new state vector from the OpenSky Network API. It also provides methods to estimate the CO2 emissions based on the fuel consumption rate. It also contains a basic function to compute the carbon emission based on the traveled distance using the Flight Fuel Consumption API.
+- `carbon_computation.py`: Contains the `StateCarbonComputation` class, which estimates the total carbon emissions in a specific airspace based on aircraft states. It maintains airspace data with state vectors and computes the distance traveled by each aircraft after receiving a new state vector from the OpenSky Network API. It also provides methods to estimate the CO2 emissions based on the fuel consumption rate. It also contains a basic function to estimate the carbon emission based on the traveled distance using the Flight Fuel Consumption API.
 - `main.py`: Acts as the entry point and handles the initialization of components, scheduling of jobs, and command-line argument parsing utilizing worker threads to perform the carbon computations and data storage jobs concurrently. Jobs currently include retrieving data from OpenSky and performing carbon computation on airstates in our airspaces every minute, aggregating that value in the database. Additionally, the total value is stored separately every hour and flight data of specific planes is retrieved every hour for computing celebrity emissions.
 - `server_api.py`: This file sets up a FastAPI application to serve as the server-side API. It interacts with the database and exposes several endpoints to retrieve information about the airspaces, total carbon emissions, and carbon emission data over time. Currently, the following endpoints are provided:
     - `/api/serverstart`: Retrieves the startup time of the server.
@@ -71,16 +71,17 @@ The Backend consists of the following python files:
         ```
 
 
-## Run The Server
+## Run The Server locally
+While it is also possible to deploy the server functionality to the Google Cloud Kubernetes Engine yourself with the provided Kubernetes Manifests and the GitHub Workflow, we only describe here, how to execute the server locally. To do that, you can use Docker-Compose to run the containerized application or you can use a simple python virtual environment.
 
-### Using Docker-Compose
+### Using Docker-Compose (recommended)
 1. Make sure to have Docker and Docker Compose installed on your system
 2. Clone the repository to the machine with `git clone`
 3. Change into the local repository in the server/src directory
 ```
 cd flights-co2-tracker/server/src
 ```
-4. Create a account_data.json file here with opensky account data for specific airspaces. The currently supported airspaces are Berlin, Paris, London, and Madrid, but it is possible to specify additional airspaces with their respective bounding boxes in the main.py file. The data for the accounts has to be provided in the following format:
+4. Create a account_data.json file in this directory with opensky account data for specific airspaces. The currently supported airspaces are Berlin, Paris, London, and Madrid, but it is possible to specify additional airspaces with their respective bounding boxes in the main.py file. The data for the accounts has to be provided in the following format:
 ```
 {
     "berlin": {
@@ -94,8 +95,8 @@ cd flights-co2-tracker/server/src
     ...
 }
 ```
-One account per airspace is not required, but currently the airstates are polled every minute from OpenSky. If you want to run the service over a longer period of time, you might get blocked if using fewer accounts.
-5. Start Docker on the machine. It should be up and running before continuing.
+One account per airspace is not required, but currently the airstates are polled every minute from OpenSky. If you want to run the service over a longer period of time, you might get blocked if using fewer accounts.\
+5. Start Docker on the machine. It should be up and running before continuing.\
 6. Build the needed docker images with:
 ```
 docker-compose build
@@ -116,15 +117,15 @@ docker-compose down
 
 ### Using Python Virtual Environment
 1. You need to have python and most likely Redis installed on your system
-2. Create and activate a python virtual environment to install required packages
-3. Perform steps 3 and 4 of the docker-compose start process and create a file for OpenSky account data in a specific directory and format.
+2. Perform steps 2-4 of the docker-compose start process and create a file for OpenSky account data in a specific directory and format.
+3. Create and activate a python virtual environment to install required packages
 4. Install python packages with:
 ```
 pip install -r requirements.txt
 pip install -r api/requirements.txt
 ```
-4. If you want to host the database yourself, start Redis on your machine. Typically, it runs on the Redis port 6379.
-5. Start the main computation script by running:
+5. If you want to host the database yourself, start Redis on your machine. Typically, it runs on the Redis port 6379.
+6. Start the main computation script by running:
 ```
 python main.py
 ```
@@ -136,11 +137,11 @@ If you created the account_data file under a different name or in a different di
 ```
 python main.py --accounts "/path/to/accounts_file"
 ```
-6. Start the server-side API using:
+7. Start the server-side API using:
 ```
 python api/server_api.py --api_host "HOST_IP_ADDRESS" --api_port "HOST_PORT"
 ```
 If the arguments are not specified, the API is started under `127.0.0.1:8000`. Again, if you have a different Redis setup, db_host and db_port have to be provided in the same way as above.
 Be aware that to start the API, server_api.py has to be able to import database.py, which is in the parent directory. You can either copy the database.py file to the api directory, update your pythonpath to include the src directory or try to import database using a relative path.
 
-7. You can now send requests to the API via `http://127.0.0.1:8000` and be provided with the data specified by the defined endpoints.
+8. You can now send requests to the API via `http://127.0.0.1:8000` and be provided with the data specified by the defined endpoints.
