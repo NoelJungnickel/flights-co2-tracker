@@ -63,7 +63,7 @@ function AirspaceDropdownButton({
   }, []);
 
   return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
+    <div className="relative z-10 inline-block text-left" ref={dropdownRef}>
       <div>
         <button
           type="button"
@@ -86,7 +86,7 @@ function AirspaceDropdownButton({
       <div
         className={`${
           isOpen ? "block" : "hidden"
-        } absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-sky-500 shadow-lg ring-1 ring-black ring-opacity-5 md:left-0`}
+        } absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-sky-500 shadow-lg ring-1 ring-black ring-opacity-5 lg:left-0`}
       >
         <div
           role="menu"
